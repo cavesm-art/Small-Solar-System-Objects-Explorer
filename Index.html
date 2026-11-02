@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Small Solar System Objects Explorer</title>
+<style>
+:root{
+  --bg:#06080f; --panel:#0b1222; --card:#101c33; --card2:#15264a; --line:#243a63;
+  --txt:#d9e4f7; --mut:#93a8cc; --white:#fff;
+  --blue:#4a9eff; --orange:#ff9a3d; --green:#39d98a; --gold:#d9b36c; --red:#ff6b6b; --cyan:#6fd6ff;
+  --ui:"Trebuchet MS","Segoe UI",Arial,sans-serif; --read:Georgia,"Times New Roman",serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--read);min-height:100%}
+button,select,input,textarea{font-family:var(--ui);font-size:15px}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+
+/* header */
+#top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:12px 20px;background:linear-gradient(160deg,#1a1230,#0a1428);border-bottom:2px solid var(--line)}
+#top h1{font-family:var(--ui);font-size:21px;margin:0;color:var(--white);letter-spacing:.2px}
+#top .who{font-family:var(--ui);font-size:13px;color:var(--mut)}
+#prog{display:flex;align-items:center;gap:8px;margin-left:auto;font-family:var(--ui);font-size:13px;color:var(--mut)}
+.pdot{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid var(--line);background:transparent}
+.pdot.on{background:var(--green);border-color:var(--green)}
+.btn{background:#26407a;color:#fff;border:1px solid #3a5ca8;border-radius:6px;padding:9px 16px}
+.btn:hover:not(:disabled){background:#3a5ca8}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.go{background:#1c7a4d;border-color:var(--green)}
+.btn.go:hover:not(:disabled){background:#23925c}
+.btn.warm{background:#9a4f12;border-color:var(--orange)}
+.btn.warm:hover:not(:disabled){background:#b9611a}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--mut)}
+.btn.sm{padding:6px 12px;font-size:13.5px}
+
+/* stage */
+#stage{display:flex;align-items:stretch;min-height:calc(100vh - 62px)}
+#skyCol{flex:1;min-width:0;display:flex;flex-direction:column}
+#skyWrap{position:relative;flex:1;min-height:380px}
+#sky{display:block;width:100%;touch-action:manipulation}
+#hint{position:absolute;left:16px;top:12px;max-width:340px;font-family:var(--ui);font-size:14px;line-height:1.5;color:var(--txt);background:rgba(9,16,34,.84);border:1px solid var(--line);border-radius:8px;padding:10px 14px;pointer-events:none}
+#hint b{color:var(--white)}
+#scale{position:absolute;right:14px;bottom:8px;font-family:var(--ui);font-size:12px;color:var(--mut)}
+#chips{display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px;border-top:1px solid var(--line);background:#080d1a;align-items:center}
+.chip{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);color:var(--txt);border-radius:999px;padding:8px 14px;border-left-width:5px}
+.chip:hover{background:var(--card2)}
+.chip .ck{color:var(--green);font-weight:bold;min-width:14px}
+.chipgap{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+
+/* panel */
+#panel{display:none;width:520px;max-width:100%;flex-shrink:0;background:var(--panel);border-left:2px solid var(--line);flex-direction:column;max-height:100vh;position:sticky;top:0;height:100vh}
+#panel.open{display:flex}
+.phead{display:flex;align-items:center;gap:12px;padding:14px 16px;border-top:5px solid var(--line)}
+.pico{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;border:2px solid;flex-shrink:0}
+.phead h2{margin:0;font-family:var(--ui);font-size:21px;color:var(--white)}
+.phead p{margin:2px 0 0;font-family:var(--ui);font-size:13px;color:var(--mut)}
+.phead .x{margin-left:auto;background:transparent;border:1px solid var(--line);color:var(--mut);border-radius:6px;padding:6px 12px}
+#steps{display:flex;gap:6px;padding:0 16px 12px}
+.stp{flex:1;font-family:var(--ui);font-size:12.5px;padding:7px 4px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--mut);text-align:center}
+.stp.cur{background:#26407a;color:#fff;border-color:var(--blue)}
+.stp.ok{color:var(--green)}
+.stp:disabled{opacity:.4;cursor:not-allowed}
+#pbody{flex:1;overflow-y:auto;padding:4px 16px 20px}
+#pfoot{display:flex;justify-content:space-between;gap:10px;padding:12px 16px;border-top:1px solid var(--line);background:#080d1a}
+#pbody h3{font-family:var(--ui);font-size:18px;color:var(--white);margin:6px 0 8px}
+#pbody .lead{font-size:15px;line-height:1.6;margin:0 0 14px;color:var(--txt)}
+.qh{border-top:1px solid var(--line);padding-top:16px;margin-top:20px !important}
+.dirs{font-family:var(--ui);font-size:14.5px;line-height:1.55;background:#0a1a30;border:1px solid var(--line);border-radius:8px;padding:10px 14px 10px 34px;margin:0 0 14px;color:var(--txt)}
+.dirs li{margin:3px 0}
+
+/* cards */
+.cards{display:grid;gap:10px}
+.card{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--blue);border-radius:6px;padding:12px 14px;color:var(--txt)}
+.card .ct{display:block;font-family:var(--ui);font-size:15px;color:var(--white);margin-bottom:4px}
+.card .cb{display:block;font-size:15px;line-height:1.6;color:#bfd3ee}
+.card:not(.open) .cb{color:var(--mut);font-family:var(--ui);font-size:13px}
+.card:not(.open):hover{background:var(--card2)}
+.card.open{background:#0b1a32;cursor:default}
+.card .vo{display:block;margin-top:6px;font-family:var(--ui);font-size:13px;color:var(--gold)}
+.lock{font-family:var(--ui);font-size:14px;color:var(--gold);background:#1a1500;border:1px dashed #6a5a20;border-radius:6px;padding:12px 14px;margin-top:18px}
+
+/* questions */
+.q{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:0 0 12px}
+.qt{margin:0 0 10px;font-size:15.5px;line-height:1.5;color:var(--white)}
+.qtag{display:inline-block;font-family:var(--ui);font-size:11.5px;color:var(--gold);border:1px solid #6a5a20;border-radius:999px;padding:1px 8px;margin-bottom:6px}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;background:#0b1a32;border:1px solid var(--line);border-radius:6px;padding:10px 12px;color:var(--txt);font-size:15px;line-height:1.4}
+.opt:hover:not(:disabled){background:var(--card2);border-color:var(--blue)}
+.opt.right{background:#0d3a26;border-color:var(--green);color:#fff}
+.opt.wrong{background:#3a1414;border-color:var(--red);color:#e6b0b0;text-decoration:line-through}
+.opt:disabled{cursor:default}
+.opt.sel{background:#26407a;border-color:var(--blue);color:#fff}
+.fb{margin:10px 0 0;font-family:var(--ui);font-size:14px;line-height:1.5}
+.fb.ok{color:var(--green)}
+.fb.no{color:var(--orange)}
+select{background:#0b1a32;color:#fff;border:1px solid var(--line);border-radius:6px;padding:9px 10px;max-width:100%}
+select.good{border-color:var(--green);background:#0d3a26}
+.note-line{font-size:16px;line-height:2.1;color:var(--white)}
+.note-line select{margin:0 4px}
+.sw{display:inline-block;width:13px;height:13px;border-radius:50%;border:1px solid #fff4;vertical-align:-1px}
+.optbadge{font-family:var(--ui);font-size:11px;color:var(--cyan);margin-left:6px}
+.grp{margin:18px 0 8px;color:#fff;font-family:var(--ui);font-weight:bold}
+
+/* labs */
+.lab{background:#0a1426;border:1px solid var(--line);border-radius:10px;padding:12px;margin:0 0 16px}
+.lab h3{margin-top:0 !important}
+.labcv{display:block;width:100%;height:auto;background:#040810;border:1px solid var(--line);border-radius:8px}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.tog{background:#0b1a32;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:8px 12px}
+.tog.on{background:#26407a;border-color:var(--blue);color:#fff}
+.tog:hover{border-color:var(--blue)}
+.status{font-family:var(--ui);font-size:13.5px;line-height:1.5;color:var(--txt);margin:8px 0 0}
+.status b{color:#fff}
+.chk{font-family:var(--ui);font-size:13.5px;margin:3px 0;color:var(--mut)}
+.chk.on{color:var(--green)}
+.chk::before{content:"○ "}
+.chk.on::before{content:"✔ "}
+input[type=range]{width:100%;accent-color:var(--orange)}
+.tbl{width:100%;border-collapse:collapse;font-family:var(--ui);font-size:13.5px;margin:8px 0}
+.tbl th,.tbl td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+.tbl th{background:#12244a;color:#fff}
+.big{font-family:var(--ui);font-size:20px;color:#fff}
+.tl{display:flex;gap:0;overflow-x:auto;padding:6px 0 10px;margin:0 0 14px;border-bottom:2px solid var(--line)}
+.tl div{flex:0 0 auto;min-width:96px;padding:6px 8px;font-family:var(--ui);font-size:12px;color:var(--txt);border-left:2px solid var(--gold);margin-right:6px}
+.tl b{display:block;color:#fff;font-size:12.5px}
+.tl i{color:var(--gold);font-style:normal;font-size:11.5px}
+
+.tbl.sb td.saved{color:#39d98a;font-weight:bold}.tbl.sb td.part{color:#ffd36a;font-weight:bold}.tbl.sb td.hit{color:#ff9a3d;font-weight:bold}
+/* overlays */
+.overlay{position:fixed;inset:0;z-index:100;overflow-y:auto;background:rgba(6,8,15,.97);display:none}
+.overlay.show{display:block}
+.sheet{max-width:800px;margin:0 auto;padding:36px 22px 90px}
+.sheet h1,.sheet h2{font-family:var(--ui);color:var(--white)}
+.sheet h1{font-size:30px;margin:0 0 8px}
+.sheet h2{font-size:22px;margin:34px 0 10px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.sheet h3{font-family:var(--ui);color:#fff;font-size:18px;margin:22px 0 6px}
+.sheet p,.sheet li{font-size:16px;line-height:1.7}
+.sheet ol{padding-left:22px}
+.sheet label{display:block;font-family:var(--ui);font-size:14px;color:var(--mut);margin:14px 0 6px}
+.sheet input[type=text]{width:100%;max-width:420px;padding:11px 12px;border-radius:6px;border:1px solid var(--line);background:#0b1a32;color:#fff}
+.note{font-family:var(--ui);font-size:13px;color:var(--mut)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}
+.optbtns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+.optbtn{text-align:left;background:var(--card);border:2px solid var(--line);border-radius:10px;padding:14px;color:var(--txt);font-family:var(--ui)}
+.optbtn b{display:block;color:#fff;font-size:17px;margin-bottom:4px}
+.optbtn.sel{border-color:var(--green);background:#0d3a26}
+.optbtn:hover{border-color:var(--blue)}
+.part{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--orange);border-radius:8px;padding:14px 16px;margin:16px 0}
+.part h3{margin:0 0 6px !important}
+.part .ask{margin:0 0 8px;color:var(--white)}
+.part .start{font-family:var(--ui);font-size:13.5px;color:var(--gold);margin:6px 0}
+.bank{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
+.fchip{background:#0b1a32;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 10px;font-size:14px;line-height:1.4;text-align:left;max-width:100%}
+.fchip.on{background:#0d3a26;border-color:var(--green);color:#fff}
+.fchip:hover{border-color:var(--blue)}
+textarea.resp{width:100%;min-height:170px;padding:12px;border-radius:8px;border:1px solid var(--line);background:#07101f;color:#fff;font-family:var(--read);font-size:16px;line-height:1.6;resize:vertical}
+.cnt{font-family:var(--ui);font-size:12.5px;color:var(--mut);margin-top:4px}
+.cnt.ok{color:var(--green)}
+.todo{font-family:var(--ui);font-size:14px;color:var(--gold);background:#1a1500;border:1px dashed #6a5a20;border-radius:8px;padding:10px 14px}
+.todo ul{margin:6px 0 0;padding-left:20px}
+.todo li{font-size:14px;line-height:1.5}
+.neocards{display:grid;gap:10px;margin:10px 0}
+.neocards .optbtn{padding:12px}
+.neocards .optbtn span{display:block;font-size:13.5px;color:var(--mut);margin-top:3px;line-height:1.5}
+
+/* documents (report + guide) */
+#reportView,#guideView{background:#e9edf4;color:#111}
+.report{background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif;max-width:850px;margin:20px auto;padding:34px 38px;border:1px solid #c9d2e0;border-radius:6px;line-height:1.5}
+.report h1{font-size:24px;margin:0 0 4px;color:#2a1450}
+.report h2{font-size:17px;margin:24px 0 8px;color:#2a1450;border-bottom:2px solid #5b3fa0;padding-bottom:4px}
+.report h3{font-size:14.5px;margin:14px 0 4px;color:#2a1450}
+.report .meta{color:#444;font-size:14px;margin:2px 0}
+.report .code{display:inline-block;font-family:Consolas,monospace;background:#f1ecff;border:1px solid #5b3fa0;border-radius:4px;padding:2px 8px;font-weight:bold}
+.report table{width:100%;border-collapse:collapse;font-size:13.5px;margin:6px 0}
+.report th,.report td{border:1px solid #c9d2e0;padding:6px 8px;text-align:left;vertical-align:top}
+.report th{background:#f1ecff}
+.report .good{color:#0a7a45;font-weight:bold}
+.report .retry{color:#b25a00;font-weight:bold}
+.report .big{font-size:18px;font-weight:bold;color:#2a1450}
+.report .resp{white-space:pre-wrap;border:1px solid #c9d2e0;border-radius:6px;padding:10px 12px;background:#fcfcff;font-size:14px}
+.report .facts{font-size:12.5px;color:#555;margin:2px 0 6px}
+.report ul{margin:4px 0 8px;padding-left:22px}
+.report li{font-size:14px;margin:3px 0}
+.report .kc{background:#f7f5ff;border-left:4px solid #5b3fa0;padding:6px 10px;margin:8px 0;font-size:13.5px}
+.report .tag{font-size:11.5px;color:#5b3fa0;font-weight:bold}
+.report .pb{page-break-inside:avoid}
+#reportView .bar,#guideView .bar{max-width:850px;margin:18px auto 0;padding:0 8px}
+@media print{
+  body{background:#fff}
+  body.pr-report>*:not(#reportView){display:none !important}
+  body.pr-guide>*:not(#guideView){display:none !important}
+  #reportView,#guideView{position:static;display:block !important;background:#fff;overflow:visible}
+  #reportView .bar,#guideView .bar{display:none}
+  .report{border:none;margin:0;padding:0;max-width:none}
+}
+
+@media (max-width:900px){
+  #stage{flex-direction:column}
+  #panel{position:fixed;inset:0;width:100%;max-height:none;height:100%;z-index:60;border-left:none}
+  #hint{position:static;max-width:none;margin:10px 12px 0;pointer-events:auto}
+  #skyWrap{min-height:0}
+  .chipgap{margin-left:0}
+  .optbtns{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto !important}}
+</style>
+</head>
+<body>
+
+<div id="top">
+  <h1>☄️ Small Solar System Objects Explorer</h1>
+  <span class="who" id="who"></span>
+  <div id="prog"><span id="progTxt">0 of 5 stops</span><span id="dots"></span></div>
+</div>
+
+<div id="stage">
+  <div id="skyCol">
+    <div id="skyWrap">
+      <canvas id="sky" aria-label="Moving model of the Solar System. Use the buttons below to pick a stop."></canvas>
+      <div id="hint"></div>
+      <div id="scale">Not to scale. Distances are squeezed to fit.</div>
+    </div>
+    <div id="chips"></div>
+  </div>
+  <aside id="panel" aria-label="Stop lesson"></aside>
+</div>
+
+<!-- intro -->
+<div id="intro" class="overlay show">
+  <div class="sheet">
+    <h1>☄️ Small Solar System Objects</h1>
+    <p class="note">Unit 2 · Our Solar System as a System · Do this on your own.</p>
+    <p>Asteroids, comets, and icy worlds are <b style="color:#fff">leftover building blocks</b> from 4.6 billion years ago. They tell us how our Solar System formed.</p>
+    <h2>How this works</h2>
+    <ol>
+      <li>Type your name below.</li>
+      <li>Click a glowing area in the moving sky. Or use the buttons under it.</li>
+      <li>Each stop has 4 steps: <b>Learn, Explore, Check, Notes</b>.</li>
+      <li>Answer the questions. Try again if you miss one.</li>
+      <li>Visit all 5 stops.</li>
+      <li>Pick an option. Write your answers in the boxes.</li>
+      <li>Get your <b>Note Guide</b> (you keep it).</li>
+      <li>Make your <b>Report</b> (you turn it in on Canvas).</li>
+    </ol>
+    <label for="nm">Your name</label>
+    <input type="text" id="nm" autocomplete="name" placeholder="First and last name">
+    <label for="pd">Class period (optional)</label>
+    <input type="text" id="pd" placeholder="Example: 3">
+    <div class="actions"><button class="btn go" id="startBtn" disabled>Start exploring</button><button class="btn ghost" id="freshBtn" style="display:none">Not me? Start fresh</button></div>
+    <p class="note">Your work saves on this computer. If you close the page, open it again to keep going.</p>
+  </div>
+</div>
+
+<!-- final -->
+<div id="final" class="overlay"><div class="sheet" id="finalSheet"></div></div>
+
+<!-- report -->
+<div id="reportView" class="overlay">
+  <div class="bar actions">
+    <button class="btn" id="rBack">← Back</button>
+    <button class="btn go" id="rCopy">Copy report text</button>
+    <button class="btn" id="rDown">Download report file</button>
+    <button class="btn" id="rPrint">Print or save as PDF</button>
+    <span class="note" id="rMsg" style="color:#0a7a45"></span>
+  </div>
+  <div class="report" id="reportBox"></div>
+</div>
+
+<!-- note guide -->
+<div id="guideView" class="overlay">
+  <div class="bar actions">
+    <button class="btn" id="gBack">← Back</button>
+    <button class="btn go" id="gCopy">Copy note guide text</button>
+    <button class="btn" id="gDown">Download note guide file</button>
+    <button class="btn" id="gPrint">Print or save as PDF</button>
+    <span class="note" id="gMsg" style="color:#0a7a45"></span>
+  </div>
+  <div class="report" id="guideBox"></div>
+</div>
+
+<script>
+/* ============ DATA ============ */
+const ORDER=['belt','kuiper','comets','missions','defense'];
+const SECS=['l','x','c','n'];
+const SECNAME={l:'1 Learn',x:'2 Explore',c:'3 Check',n:'4 Notes'};
+
+/* item builders. The right answer is always written FIRST; the page shuffles the order. */
+const mc=(q,o,w,extra)=>Object.assign({kind:'choice',prompt:q,opts:o,correct:0,why:w},extra||{});
+const tf=(q,ans,w,extra)=>Object.assign({kind:'choice',prompt:q,opts:['True','False'],correct:ans?0:1,why:w,fixed:true},extra||{});
+const pk=(q,o,c,w,extra)=>Object.assign({kind:'select',prompt:q,opts:o,correct:c,why:w,fixed:true},extra||{});
+const nt=(pre,o,post)=>({kind:'note',pre,post,opts:o,correct:0});
+
+/* scale-model numbers */
+const PLUTO_KM=2377, EARTH_KM=12742, PLUTO_SUN_KM=5906000000, SUN_KM=1391400, BASE_CM=7.4;
+
+const P={
+belt:{name:'Asteroid Belt',sym:'🪨',color:'#d9b36c',au:'2.2–3.2 AU',tag:'Rocky leftovers between Mars and Jupiter',
+ labs:['jup'],
+ learn:[
+  ['Where is it?','The <b>Asteroid Belt</b> is between Mars and Jupiter. It is 2.2 to 3.2 <b>AU</b> from the Sun.','AU = the distance from Earth to the Sun.'],
+  ['Mostly empty space','Movies show crowded rocks. The real belt is not like that. Asteroids are about 1 million km apart. Spacecraft fly through it safely.'],
+  ['Why no planet?','Jupiter’s strong <b>gravity</b> stirred up the rocks. They crashed at high speed. They broke apart. They did not stick together.','Gravity = the pull between objects.'],
+  ['Not much stuff','All the asteroids together have only about 4% of the Moon’s mass. More than 1 million asteroids are wider than 1 km.'],
+  ['The big four','<b>Ceres</b> is 940 km wide. It is a dwarf planet. <b>Vesta</b> is 525 km. <b>Pallas</b> is 512 km. <b>Hygiea</b> is 434 km. Ceres may have salty water under its crust.','Dwarf planet = round like a planet, but it shares its orbit with other objects.'],
+  ['Asteroid families','Some asteroids share nearly the same orbit. They are a <b>family</b>. They came from one big rock that broke apart.'],
+  ['Kirkwood gaps','Some lanes in the belt are almost empty. Jupiter tugs on rocks there again and again. Those rocks get tossed out.','Kirkwood gap = an empty lane in the belt.'],
+  ['C-type asteroids','<b>75%</b> of known asteroids. They are dark and rich in carbon. Most are in the <b>outer</b> belt. They hold water-bearing minerals. They are very old.'],
+  ['S-type asteroids','<b>17%</b> of known asteroids. They are bright and stony. They have some nickel-iron. Most are in the <b>inner</b> belt. They are the most common type near Earth.'],
+  ['M-type asteroids','<b>8%</b> of known asteroids. They are mostly iron and nickel. They may be the cores of bigger rocks that were smashed apart.']
+ ],
+ x:[
+  mc('<span class="sw" style="background:#2b2b2b"></span> <b>Rock A</b> is very dark. It has carbon and water-bearing minerals. It orbits in the outer belt. What type is it?',['C-type','S-type','M-type'],'Dark and carbon-rich means C-type.',{fixed:true}),
+  mc('<span class="sw" style="background:#d8cfc0"></span> <b>Rock B</b> is bright and stony. It has some nickel-iron. It orbits in the inner belt. What type is it?',['S-type','C-type','M-type'],'Bright, stony, and inner belt means S-type.',{fixed:true}),
+  mc('<span class="sw" style="background:#b8c2cc"></span> <b>Rock C</b> is shiny metal. It is mostly iron and nickel. It may be a broken core. What type is it?',['M-type','C-type','S-type'],'Metal-rich means M-type.',{fixed:true})
+ ],
+ c:[
+  mc('Why did the Asteroid Belt never make a planet?',['Jupiter’s gravity made rocks crash and break apart.','It was too cold for rock to form.','The Sun blew all the rocks away.','Mars pulled in all the rocks.'],'Jupiter’s gravity (cause) stopped a planet from forming (effect).',{kc:2,cc:'Cause and Effect'}),
+  mc('Why are C-type asteroids mostly in the outer belt?',['It was cooler far from the Sun. Carbon and water-bearing minerals could stay.','It was hotter far from the Sun.','Jupiter makes carbon.','Mars threw them out there.'],'Cool places kept carbon and water-bearing minerals. Hot places lost them.',{kc:4,cc:'Structure and Function'}),
+  mc('The belt has lasted billions of years. Why?',['Rocks are far apart, so crashes are rare.','Rocks never crash.','New rocks fall in from Earth.','Jupiter holds every rock in place.'],'Crashes do happen, but slowly. The belt changes a little. Its overall shape stays about the same.',{kc:7,cc:'Stability and Change'}),
+  tf('The Asteroid Belt is crowded. Rocks are close together.',false,'The belt is mostly empty space.'),
+  mc('What is Ceres?',['A dwarf planet in the belt','A comet','A moon of Jupiter','A star'],'Ceres is the biggest object in the belt.')
+ ],
+ n:[
+  nt('The Asteroid Belt is between Mars and ',['Jupiter','Saturn','Venus','Neptune'],'.'),
+  nt('Jupiter’s ',['gravity','magnetism','wind','ice'],' kept a planet from forming there.'),
+  nt('The most common asteroid type is ',['C-type','S-type','M-type','a comet'],'. It is dark and rich in carbon.'),
+  nt('M-type asteroids are mostly iron and ',['nickel','water','sand','carbon'],'.'),
+  nt('',['Ceres','Vesta','Pluto','Eris'],' is the biggest object in the belt. It is a dwarf planet.')
+ ],
+ vocab:[['Asteroid','A rocky or metal body that orbits the Sun. Most are in the Asteroid Belt.'],['AU','Astronomical Unit. The distance from Earth to the Sun.'],['Gravity','The pull between objects.'],['Dwarf planet','Round like a planet, but it shares its orbit with other objects.'],['Asteroid family','Asteroids with matching orbits. They came from one broken rock.'],['Kirkwood gap','An empty lane in the belt, caused by Jupiter’s repeated tugs.']],
+ ref:`<h3>Asteroid types</h3><table><tr><th>Type</th><th>Share</th><th>Look</th><th>Made of</th><th>Where</th></tr><tr><td>C-type</td><td>75%</td><td>Dark</td><td>Carbon, water-bearing minerals</td><td>Outer belt</td></tr><tr><td>S-type</td><td>17%</td><td>Bright</td><td>Stone and some nickel-iron</td><td>Inner belt</td></tr><tr><td>M-type</td><td>8%</td><td>Shiny</td><td>Iron and nickel</td><td>Middle belt</td></tr></table><h3>Big four in the belt</h3><table><tr><th>Name</th><th>Width</th><th>Fact</th></tr><tr><td>Ceres</td><td>940 km</td><td>Dwarf planet. May have salty water below.</td></tr><tr><td>Vesta</td><td>525 km</td><td>Has a metal core, rock mantle, and crust.</td></tr><tr><td>Pallas</td><td>512 km</td><td>Tilted, stretched orbit.</td></tr><tr><td>Hygiea</td><td>434 km</td><td>May be a dwarf planet.</td></tr></table>`
+},
+
+kuiper:{name:'Kuiper Belt',sym:'❄️',color:'#4a9eff',au:'30–50 AU',tag:'The icy edge past Neptune',
+ labs:['scale'],
+ learn:[
+  ['Where is it?','The <b>Kuiper Belt</b> is just past Neptune. It is 30 to 50 AU from the Sun. It is shaped like a flat disk.','Kuiper = say “KY-per.”'],
+  ['Very cold, very icy','It is about –220°C. Most objects here are ice. The ice is water, methane, and ammonia.'],
+  ['Big and heavy','It is about 20 times wider than the Asteroid Belt. It has 20 to 200 times more mass.'],
+  ['Found in 1992','Gerard Kuiper guessed it was there in 1951. Astronomers found the first Kuiper Belt object in 1992.','KBO = Kuiper Belt Object.'],
+  ['Pluto','<b>Pluto</b> is 2,377 km wide. It was found in 1930. It became a dwarf planet in 2006. It has 5 known moons.'],
+  ['Eris','<b>Eris</b> is 2,326 km wide. It is a little smaller than Pluto. But it has about 27% more mass. Finding Eris in 2005 led to Pluto’s new name.'],
+  ['Makemake','<b>Makemake</b> is 1,430 km wide. It is named after a god of Rapa Nui (Easter Island). One trip around the Sun takes about 310 Earth years.'],
+  ['Haumea','<b>Haumea</b> is stretched like a football: 2,322 × 1,704 × 1,026 km. It spins once every 4 hours. It has a ring and two moons.'],
+  ['Classical KBOs','Also called cubewanos. They have almost circular orbits at 42 to 48 AU. They have been calm since the Solar System formed.'],
+  ['Plutinos','These are <b>resonant</b> KBOs. Neptune goes around 3 times while a plutino goes around 2 times. Pluto is the biggest plutino.','Resonance = a repeating pattern of tugs between two orbits.'],
+  ['Scattered disk','Neptune’s gravity tossed these objects onto long, tilted orbits. Eris is the biggest one.'],
+  ['The Kuiper Cliff','Past about 50 AU, the number of objects drops fast. Scientists are not sure why. It is still a mystery.']
+ ],
+ x:[
+  mc('<b>Step 1.</b> Find the scale ratio. Model Pluto = 7.4 cm. Real Pluto = 2,377 km. Divide 7.4 ÷ 2,377. What do you get?',['About 0.0031 cm for every 1 km','About 0.31 cm for every 1 km','About 3.1 cm for every 1 km','About 321 cm for every 1 km'],'Each real kilometer becomes about 0.0031 cm in the model.'),
+  mc('<b>Step 2.</b> Real Earth is 12,742 km wide. Multiply by the ratio. How wide is model Earth?',['About 40 cm (a big beach ball)','About 4 cm (a ping-pong ball)','About 400 cm (a small room)','About 0.4 cm (a pea)'],'12,742 × 0.0031 = about 40 cm. Earth is about 5 times wider than Pluto, so it is much bigger than the baseball.'),
+  mc('<b>Step 3.</b> Pluto is 5,906,000,000 km from the Sun on average. Multiply by the ratio. How far is model Pluto from the model Sun? (Tip: 100,000 cm = 1 km.)',['About 184 km (a 2-hour drive)','About 18 km','About 1,840 km','About 1.8 km'],'5,906,000,000 × 0.0031 = about 18,400,000 cm. That is about 184 km.'),
+  mc('<b>Bonus.</b> Light travels 300,000 km every second. The Sun is 5,906,000,000 km from Pluto. How long does sunlight take to get there?',['About 5½ hours','About 5½ minutes','About 5½ days','About 5½ seconds'],'5,906,000,000 ÷ 300,000 = about 19,700 seconds. That is about 5½ hours.',{bonus:true}),
+  mc('<b>Bonus.</b> A spacecraft is near Pluto. Why is that delay a problem?',['Commands take hours to arrive, so the spacecraft must do some jobs by itself.','Light slows down near Pluto.','Signals cannot reach Pluto at all.','The Sun blocks every signal.'],'A long delay means no real-time control. Spacecraft need to work on their own.',{bonus:true})
+ ],
+ c:[
+  mc('You travel 50 AU to the edge of the Kuiper Belt. The outer edge of the Oort Cloud is 100,000 AU away. How much of that trip did you finish?',['0.05% (almost nothing)','0.5%','5%','50%'],'50 ÷ 100,000 = 0.0005, or 0.05%. The distances out there are huge.',{kc:3,cc:'Scale, Proportion, and Quantity'}),
+  pk('<b>Compare the belts.</b> Which belt is mostly rock and metal?',['Asteroid Belt','Kuiper Belt','Both belts'],0,'The Asteroid Belt is rocky and metallic.',{grp:true}),
+  pk('Which belt is mostly ice?',['Asteroid Belt','Kuiper Belt','Both belts'],1,'Kuiper Belt objects are mostly frozen water, methane, and ammonia.'),
+  pk('Which belt is about 20 times wider?',['Asteroid Belt','Kuiper Belt','Both belts'],1,'The Kuiper Belt is much larger.'),
+  pk('Which belt never made a planet?',['Asteroid Belt','Kuiper Belt','Both belts'],2,'Neither belt formed a planet.'),
+  pk('Which belt has dwarf planets?',['Asteroid Belt','Kuiper Belt','Both belts'],2,'Ceres is in the Asteroid Belt. Pluto and others are out past Neptune.'),
+  mc('What do the two belts tell us about the early Solar System?',['It was hot near the Sun and cold far away. Rock formed close in. Ice formed far out.','It was the same temperature everywhere.','Only rock existed.','Jupiter made both belts.'],'The mix of rock near the Sun and ice far away shows a temperature gradient.',{kc:8,cc:'Comparative Systems'}),
+  mc('Which KBOs orbit in a 2:3 pattern with Neptune?',['Plutinos','Cubewanos','Scattered disk objects','Comets'],'Plutinos are resonant with Neptune. Pluto is the biggest one.')
+ ],
+ n:[
+  nt('The Kuiper Belt is just past ',['Neptune','Mars','Jupiter','Venus'],'’s orbit.'),
+  nt('Most Kuiper Belt objects are made of ',['ice','iron','sand','plastic'],'.'),
+  nt('',['Pluto','Ceres','Vesta','Halley'],' became a dwarf planet in 2006.'),
+  nt('Plutinos orbit in a 2:3 ',['resonance','family','gap','tail'],' with Neptune.'),
+  nt('If Pluto is a baseball, Earth is about ',['40 cm','4 cm','4 m','400 m'],' wide.'),
+  nt('If Pluto is a baseball, the Sun is about ',['184 km','18 km','2 km','1,840 km'],' away.')
+ ],
+ vocab:[['Kuiper Belt','A flat disk of icy bodies from 30 to 50 AU.'],['KBO','Kuiper Belt Object.'],['Plutino','A KBO in a 2:3 resonance with Neptune.'],['Cubewano','A classical KBO with a nearly circular orbit.'],['Scattered disk','Icy bodies tossed onto long, tilted orbits by Neptune.'],['Resonance','A repeating pattern of tugs between two orbits.'],['Scale ratio','Model size ÷ real size.']],
+ ref:`<h3>Dwarf planets past Neptune</h3><table><tr><th>Name</th><th>Size</th><th>Fact</th></tr><tr><td>Pluto</td><td>2,377 km</td><td>Found 1930. Dwarf planet since 2006. 5 moons.</td></tr><tr><td>Eris</td><td>2,326 km</td><td>About 27% more mass than Pluto. Found 2005.</td></tr><tr><td>Makemake</td><td>1,430 km</td><td>One orbit takes about 310 years.</td></tr><tr><td>Haumea</td><td>2,322 × 1,704 × 1,026 km</td><td>Stretched. Spins every 4 hours. Ring and 2 moons.</td></tr></table><h3>Three kinds of KBOs</h3><table><tr><th>Kind</th><th>Orbit</th><th>Example</th></tr><tr><td>Classical (cubewanos)</td><td>Almost circular, 42–48 AU</td><td>Arrokoth</td></tr><tr><td>Resonant (plutinos)</td><td>2:3 pattern with Neptune</td><td>Pluto</td></tr><tr><td>Scattered disk</td><td>Long and tilted</td><td>Eris</td></tr></table>`
+},
+
+comets:{name:'Comets & Oort Cloud',sym:'☄️',color:'#6fd6ff',au:'Orbits from 0.5 to 100,000 AU',tag:'Dirty snowballs with tails',
+ labs:['tail','origin'],
+ learn:[
+  ['Dirty snowballs','A <b>comet</b> is a ball of ice, rock, and dust. It is left over from when the Solar System formed 4.6 billion years ago.'],
+  ['Nucleus','The solid center. It is 1 to 50 km wide. It is the only part that stays all the time.','Nucleus = the solid core of a comet.'],
+  ['Coma','A glowing cloud around the nucleus. Sunlight turns ice straight into gas. The cloud can be hundreds of thousands of km wide.','Sublimation = a solid turns straight into a gas.'],
+  ['Dust tail','Curved and white or yellow. Sunlight pushes dust away from the Sun. It can be tens of millions of km long.'],
+  ['Ion tail','Straight and blue. The solar wind pushes gas away from the Sun. It can be 100 million km long or more.','Ion = a gas particle with an electric charge. Solar wind = a stream of particles from the Sun.'],
+  ['Tails point away','A tail always points <b>away</b> from the Sun. The comet’s motion does not matter. When a comet leaves the Sun, it flies tail-first!'],
+  ['Short-period comets','They take less than 200 years to orbit. They come from the <b>Kuiper Belt</b>. They orbit near the flat plane of the planets, in the same direction. Halley’s Comet takes about 75 years.'],
+  ['Long-period comets','They take more than 200 years to orbit. Some take millions. They come from the <b>Oort Cloud</b>. They can arrive from any direction. Hale-Bopp is one.'],
+  ['The Oort Cloud','A huge round shell of icy rocks around the whole Solar System. It is 2,000 to 100,000 AU out. No one has seen it. We know it is there because of the paths of long-period comets.','Oort = say “ORT.”'],
+  ['Meteor showers','Earth passes through dust left by comets. The dust burns up in our air. We see shooting stars. The Perseids come from Comet Swift-Tuttle.'],
+  ['Famous comets','Halley returns in 2061. Shoemaker-Levy 9 crashed into Jupiter in 1994. Comet 67P was visited by Rosetta. NEOWISE was easy to see in 2020. It returns in about 6,800 years.']
+ ],
+ x:[],
+ c:[
+  mc('Short-period comets orbit near the same flat plane as the planets. Why?',['They come from the Kuiper Belt, which is a flat disk.','They come from the Oort Cloud, which is a round shell.','The Sun squashes their orbits flat.','They are made of different stuff.'],'The Kuiper Belt is a disk in the same plane as the planets. Oort Cloud comets can come from any side.',{kc:1,cc:'Patterns'}),
+  mc('Why do comets grow tails only near the Sun?',['Sunlight gives energy. Ice turns to gas and flows away.','They catch fire near the Sun.','The tail is engine exhaust.','Tails grow when comets get cold.'],'Energy from the Sun makes ice change into gas. Far from the Sun there is not enough energy.',{kc:6,cc:'Energy and Matter'}),
+  tf('A comet always flies with its tail behind it.',false,'The tail points away from the Sun. When a comet leaves the Sun, it flies tail-first.'),
+  mc('Which tail is straight and blue?',['The ion tail','The dust tail','The coma','The nucleus'],'The solar wind pushes gas into a straight, blue ion tail.'),
+  mc('Where do long-period comets come from?',['The Oort Cloud','The Asteroid Belt','Jupiter’s moons','The Sun'],'Long-period comets fall in from the faraway Oort Cloud.'),
+  mc('What is the only part of a comet that stays all the time?',['The nucleus','The coma','The dust tail','The ion tail'],'The nucleus is the solid core.')
+ ],
+ n:[
+  nt('The solid center of a comet is the ',['nucleus','coma','tail','shell'],'.'),
+  nt('Ice that turns straight into gas is called ',['sublimation','freezing','melting','orbiting'],'.'),
+  nt('A comet’s tail always points ',['away from','toward','up from','around'],' the Sun.'),
+  nt('Short-period comets come from the ',['Kuiper','Oort','Asteroid','Venus'],' Belt.'),
+  nt('Long-period comets come from the ',['Oort','Kuiper','Asteroid','Mars'],' Cloud.')
+ ],
+ vocab:[['Comet','A ball of ice, rock, and dust that grows a tail near the Sun.'],['Nucleus','The solid core of a comet.'],['Coma','The glowing cloud around the nucleus.'],['Sublimation','A solid turns straight into a gas.'],['Ion tail','A straight, blue tail of gas pushed by the solar wind.'],['Dust tail','A curved, white or yellow tail of dust pushed by sunlight.'],['Oort Cloud','A huge round shell of icy bodies, 2,000 to 100,000 AU out.']],
+ ref:`<h3>Parts of a comet</h3><table><tr><th>Part</th><th>What it is</th></tr><tr><td>Nucleus</td><td>Solid core of ice, rock, and dust. 1 to 50 km wide.</td></tr><tr><td>Coma</td><td>Cloud of gas and dust around the nucleus.</td></tr><tr><td>Dust tail</td><td>Curved. White or yellow.</td></tr><tr><td>Ion tail</td><td>Straight. Blue.</td></tr></table><h3>Two kinds of comets</h3><table><tr><th></th><th>Short-period</th><th>Long-period</th></tr><tr><td>Orbit time</td><td>Under 200 years</td><td>Over 200 years</td></tr><tr><td>Source</td><td>Kuiper Belt</td><td>Oort Cloud</td></tr><tr><td>Direction</td><td>Near the planets’ plane</td><td>Any direction</td></tr><tr><td>Example</td><td>Halley (75 years)</td><td>Hale-Bopp</td></tr></table>`
+},
+
+missions:{name:'Space Missions',sym:'🛰️',color:'#c58bff',au:'1996 to 2033',tag:'Robot explorers visit small worlds',
+ labs:['time'],
+ learn:[
+  ['Why go there?','Asteroids and comets are time capsules. They show what the Solar System was made of. They may have brought water and life’s building blocks to Earth.'],
+  ['NEAR Shoemaker (1996–2001)','First spacecraft to orbit and land on an asteroid: <b>433 Eros</b>. Eros is solid rock covered with loose dust and rock.','Regolith = loose rock and dust on a surface.'],
+  ['Dawn (2007–2018)','Visited <b>Vesta</b> and <b>Ceres</b>. Found water ice and bright salt spots in Occator Crater on Ceres.'],
+  ['Hayabusa and Hayabusa2 (Japan)','Hayabusa (2003–2010) brought samples home from <b>Itokawa</b>. Hayabusa2 (2014–2020) brought samples from <b>Ryugu</b>. The samples held organic molecules and water-bearing minerals.'],
+  ['OSIRIS-REx (2016–2023)','Collected a sample from asteroid <b>Bennu</b>. It landed on Earth in September 2023. Scientists are still studying it.'],
+  ['Rosetta and Philae (2004–2016)','Europe’s <b>Rosetta</b> orbited Comet 67P for two years. Its lander <b>Philae</b> made the first soft landing on a comet in 2014. They found complex organic molecules and jets of gas and dust.'],
+  ['Deep Impact (2005)','Crashed an impactor into Comet Tempel 1. The cloud showed the inside. The surface was fine powder. The inside had more dust and less ice than expected.'],
+  ['New Horizons (2006–now)','Flew past <b>Pluto</b> in 2015. Then flew past <b>Arrokoth</b> in 2019. Arrokoth looks like two lobes stuck together. It shows that small objects joined gently.'],
+  ['Psyche and Lucy','<b>Psyche</b> launched in 2023. It will reach a metal asteroid in 2029. <b>Lucy</b> launched in 2021. It will visit 8 asteroids by 2033.'],
+  ['Comet Interceptor and Hera','<b>Comet Interceptor</b> is planned for 2029. It will wait for a fresh comet and then fly to it. <b>Hera</b> launched in 2024. It will study Dimorphos after the DART crash.']
+ ],
+ x:[
+  pk('Which mission was <b>first to land on an asteroid</b> (Eros)?',['NEAR Shoemaker','Dawn','OSIRIS-REx','Rosetta','New Horizons','Psyche'],0,'NEAR Shoemaker landed on Eros in 2001.'),
+  pk('Which mission <b>visited Vesta and Ceres</b>?',['NEAR Shoemaker','Dawn','OSIRIS-REx','Rosetta','New Horizons','Psyche'],1,'Dawn orbited both of the belt’s biggest bodies.'),
+  pk('Which mission <b>brought a Bennu sample</b> to Earth in 2023?',['NEAR Shoemaker','Dawn','OSIRIS-REx','Rosetta','New Horizons','Psyche'],2,'OSIRIS-REx dropped its sample capsule in September 2023.'),
+  pk('Which mission <b>landed a probe on a comet</b> in 2014?',['NEAR Shoemaker','Dawn','OSIRIS-REx','Rosetta','New Horizons','Psyche'],3,'Rosetta’s lander Philae touched down on Comet 67P.'),
+  pk('Which mission flew past <b>Pluto and Arrokoth</b>?',['NEAR Shoemaker','Dawn','OSIRIS-REx','Rosetta','New Horizons','Psyche'],4,'New Horizons visited both Kuiper Belt worlds.'),
+  pk('Which mission will visit a <b>metal asteroid</b> in 2029?',['NEAR Shoemaker','Dawn','OSIRIS-REx','Rosetta','New Horizons','Psyche'],5,'Psyche is heading to asteroid 16 Psyche.')
+ ],
+ c:[
+  mc('Why do scientists study asteroid and comet samples?',['They are leftovers from when the Solar System formed.','They are brand-new rocks.','They are made on Earth.','They have no ice or rock.'],'Small bodies kept their original material for 4.6 billion years.'),
+  mc('Which mission found bright salt spots on Ceres?',['Dawn','Deep Impact','Hayabusa','Rosetta'],'Dawn photographed the bright spots in Occator Crater.'),
+  mc('What did Arrokoth’s shape show scientists?',['Small objects can join together gently.','Comets are made of metal.','Asteroids have rings.','Pluto has no moons.'],'Two lobes stuck together. That shows a slow, gentle collision.'),
+  mc('What did Hayabusa2 and OSIRIS-REx bring to Earth?',['Rock and dust samples from asteroids','Live comets','Pieces of Jupiter','Ice from Pluto'],'Both returned samples for labs to study.'),
+  tf('Philae made the first soft landing on a comet.',true,'Philae landed on Comet 67P in 2014.'),
+  mc('What did Deep Impact do?',['It hit a comet to see what was inside.','It landed on Mars.','It brought home asteroid dust.','It flew past Pluto.'],'It crashed an impactor into Comet Tempel 1.')
+ ],
+ n:[
+  nt('NEAR Shoemaker landed on asteroid ',['Eros','Bennu','Ryugu','Ceres'],'.'),
+  nt('Dawn visited Vesta and ',['Ceres','Pluto','Eros','Bennu'],'.'),
+  nt('OSIRIS-REx brought a sample from asteroid ',['Bennu','Eros','Itokawa','Vesta'],'.'),
+  nt('New Horizons visited Pluto and ',['Arrokoth','Eros','Ceres','Halley'],'.'),
+  nt('Rosetta’s lander was named ',['Philae','Dawn','Lucy','Hera'],'.')
+ ],
+ vocab:[['Sample return','A mission that brings rock or dust back to Earth.'],['Flyby','A spacecraft passes by a world without stopping.'],['Orbiter','A spacecraft that circles a world.'],['Lander','A spacecraft that touches down on a surface.'],['Regolith','Loose rock and dust on a surface.']],
+ ref:`<h3>Mission match</h3><table><tr><th>Mission</th><th>Target</th><th>Big result</th></tr><tr><td>NEAR Shoemaker (1996–2001)</td><td>Eros</td><td>First to orbit and land on an asteroid.</td></tr><tr><td>Dawn (2007–2018)</td><td>Vesta, Ceres</td><td>Water ice and salt spots on Ceres.</td></tr><tr><td>Hayabusa / Hayabusa2</td><td>Itokawa, Ryugu</td><td>Samples with organic molecules.</td></tr><tr><td>OSIRIS-REx (2016–2023)</td><td>Bennu</td><td>Sample returned in 2023.</td></tr><tr><td>Rosetta + Philae (2004–2016)</td><td>Comet 67P</td><td>First soft landing on a comet.</td></tr><tr><td>Deep Impact (2005)</td><td>Comet Tempel 1</td><td>Looked inside a comet.</td></tr><tr><td>New Horizons (2006–now)</td><td>Pluto, Arrokoth</td><td>Closest look at the Kuiper Belt.</td></tr><tr><td>DART (2022)</td><td>Dimorphos</td><td>Changed an asteroid’s orbit.</td></tr><tr><td>Psyche (2023 launch)</td><td>16 Psyche</td><td>Arrives 2029.</td></tr><tr><td>Lucy (2021 launch)</td><td>8 asteroids</td><td>Visits through 2033.</td></tr></table>`
+},
+
+defense:{name:'Near-Earth Objects & Defense',sym:'🛡️',color:'#ff7e5a',au:'Orbits that cross Earth’s path',tag:'Can we protect Earth?',
+ labs:['deflect','bomb','show'],
+ learn:[
+  ['What is a NEO?','A <b>Near-Earth Object</b> is an asteroid or comet whose orbit comes close to Earth’s path. Scientists track tens of thousands of them. Most are no danger.','NEO = Near-Earth Object.'],
+  ['66 million years ago','A rock about 10 km wide hit Mexico. It made the Chicxulub crater. Dust blocked sunlight for years. Food chains collapsed. Dinosaurs (except birds) died out.'],
+  ['Tunguska (1908)','A space rock exploded over Siberia. It flattened about 2,000 square km of forest. June 30 is Asteroid Day to remember it.'],
+  ['Chelyabinsk (2013)','A rock about 20 m wide exploded over Russia. The shockwave broke windows. More than 1,500 people were hurt, mostly by broken glass.'],
+  ['Watching the sky','Telescopes find and track NEOs. Math predicts their paths many years ahead. More warning time means more time to act.'],
+  ['DART (2022)','NASA crashed a spacecraft into <b>Dimorphos</b> at 22,530 km/h. Dimorphos’s orbit got about <b>32 minutes</b> shorter. This was the first test of a <b>kinetic impactor</b>.','Kinetic impactor = a spacecraft that crashes into an asteroid to push it.'],
+  ['Gravity tractor','A spacecraft flies next to an asteroid for years. Its tiny gravity slowly tugs the rock. It is gentle and precise. It needs lots of time.'],
+  ['Nuclear blast','An explosion near the rock could push it. It is the strongest idea. Scientists keep it as a last resort. It has never been tested in space. Space treaties also limit nuclear blasts in space.'],
+  ['Why not just bomb it?','Many people think a bomb fixes everything. It does not. A blast that is too big can <b>shatter</b> the rock. The pieces can still hit Earth. A <b>rubble pile</b> breaks very easily. You will test this in the Bomb Lab.','Rubble pile = a loose pile of rocks held together by gravity. Shatter = break into many pieces.'],
+  ['Laser or ion beam','A beam could slowly push on the rock. It is gentle. It needs a long time. It has never been tested in space.'],
+  ['Water delivery','Many scientists think comets and asteroids brought much of Earth’s water about 4 billion years ago. Some comet water matches Earth’s water.'],
+  ['Space mining','Some metal asteroids hold lots of iron, nickel, and other metals. Companies study mining them. It is very hard and costly.']
+ ],
+ x:[],
+ c:[
+  mc('How does DART show that we understand the Solar System as a system?',['We used orbit science to change an asteroid’s path and we predicted the result.','We found a new planet.','We stopped the Sun from moving.','We made Dimorphos disappear.'],'DART used the physics of orbits to change a part of the system on purpose.',{kc:5,cc:'Systems and System Models'}),
+  mc('In the Deflection Lab, what helped a small push work?',['More warning time','A smaller asteroid','Waiting until it was close','Pushing it sideways'],'A tiny push early becomes a big miss later.'),
+  pk('<b>Match the method.</b> A spacecraft crashes into the rock.',['Kinetic impactor','Gravity tractor','Nuclear blast','Laser or ion beam'],0,'That is a kinetic impactor, like DART.',{grp:true}),
+  pk('A spacecraft hovers nearby and tugs with its gravity for years.',['Kinetic impactor','Gravity tractor','Nuclear blast','Laser or ion beam'],1,'That is a gravity tractor.'),
+  pk('An explosion goes off near the rock. It is a last resort.',['Kinetic impactor','Gravity tractor','Nuclear blast','Laser or ion beam'],2,'That is the nuclear blast idea.'),
+  pk('A beam gently pushes on the rock over a long time.',['Kinetic impactor','Gravity tractor','Nuclear blast','Laser or ion beam'],3,'That is a laser or ion beam.'),
+  tf('Most of the people hurt at Chelyabinsk were hurt by broken glass.',true,'The shockwave broke windows.'),
+  tf('A bigger bomb is always better at saving Earth.',false,'Too big a blast can shatter the rock. The pieces can still hit Earth.'),
+  mc('What happened when a blast hit a rubble pile?',['It broke into pieces, and many pieces still hit Earth.','It turned into one bigger rock.','It always vanished.','It stopped moving.'],'A rubble pile is loose. A blast breaks it up. With little warning, the pieces do not spread out enough to miss.'),
+  mc('What mattered most in every Showdown scenario?',['How much warning time we had','The color of the rock','The name of the asteroid','The size of the spacecraft'],'More warning time lets a small push grow into a big miss. With 2 years, nothing worked.'),
+  mc('Which method was most helpful overall in the Showdown?',['Kinetic impactor','Nuclear blast','Gravity tractor','Laser or ion beam'],'The kinetic impactor saved Earth in 2 of 3 scenarios. It worked even on the rubble pile. This is a simple model, but DART showed it works in real life too.')
+ ],
+ n:[
+  nt('NEO stands for Near-',['Earth','Sun','Moon','Mars'],' Object.'),
+  nt('DART hit the asteroid moon ',['Dimorphos','Bennu','Eros','Ceres'],'.'),
+  nt('A spacecraft that crashes into a rock to push it is a ',['kinetic','gravity','laser','nuclear'],' impactor.'),
+  nt('DART changed Dimorphos’s orbit by about ',['32','3','320','2'],' minutes.'),
+  nt('The more ',['warning','speed','weight','heat'],' time we have, the smaller the push we need.'),
+  nt('A blast that is too big can ',['shatter','paint','freeze','hide'],' the rock into pieces that may still hit Earth.'),
+  nt('In the Showdown, the most helpful method was the ',['kinetic impactor','gravity tractor','laser beam','nuclear blast'],'.')
+ ],
+ vocab:[['NEO','Near-Earth Object. An asteroid or comet with an orbit near Earth’s path.'],['Kinetic impactor','A spacecraft that crashes into a rock to push it.'],['Gravity tractor','A spacecraft that tugs an asteroid with its own gravity.'],['Deflect','To push something onto a new path.'],['Rubble pile','A loose pile of rocks held together by gravity.'],['Shatter','To break into many pieces.'],['Torino Scale','A 0 to 10 scale for how risky an impact is. 0 means no real risk.']],
+ ref:`<h3>Ways to deflect an asteroid</h3><table><tr><th>Method</th><th>How it works</th><th>Good / hard</th></tr><tr><td>Kinetic impactor</td><td>Spacecraft crashes into the rock.</td><td>Proven by DART. Needs years of warning.</td></tr><tr><td>Gravity tractor</td><td>Spacecraft tugs with gravity.</td><td>Gentle and precise. Takes years.</td></tr><tr><td>Nuclear blast</td><td>Explosion near the rock.</td><td>Strongest. Last resort. Can shatter the rock. Never tested in space.</td></tr><tr><td>Laser / ion beam</td><td>Beam pushes slowly.</td><td>Gentle. Never tested in space.</td></tr></table><h3>Why a bigger bomb is not always better</h3><ul><li>A blast that is too big can shatter the rock.</li><li>A rubble pile breaks very easily.</li><li>Pieces can still hit Earth, especially with little warning.</li><li>In the Showdown, the kinetic impactor saved Earth most often.</li></ul><h3>Famous impacts</h3><table><tr><th>Event</th><th>What happened</th></tr><tr><td>66 million years ago</td><td>10 km rock hit Mexico. Dinosaurs died out.</td></tr><tr><td>Tunguska, 1908</td><td>Explosion flattened 2,000 sq km of forest.</td></tr><tr><td>Chelyabinsk, 2013</td><td>20 m rock exploded. 1,500+ hurt by glass.</td></tr></table>`
+}
+};
+
+/* extra facts for the Missions timeline */
+const TIMELINE=[['1996','NEAR Shoemaker launches'],['2001','Lands on Eros'],['2005','Deep Impact hits a comet'],['2007','Dawn launches'],['2014','Philae lands on a comet'],['2015','New Horizons at Pluto'],['2018','Dawn mission ends'],['2019','New Horizons at Arrokoth'],['2020','Hayabusa2 returns Ryugu sample'],['2021','Lucy launches'],['2022','DART hits Dimorphos'],['2023','OSIRIS-REx returns Bennu sample · Psyche launches'],['2024','Hera launches'],['2029','Psyche arrives · Comet Interceptor planned'],['2033','Lucy’s last asteroid visit']];
+
+/* assign ids, sections */
+ORDER.forEach(k=>{
+  ['x','c','n'].forEach(s=>P[k][s].forEach((it,i)=>{it.id=`${k}.${s}.${i}`;it.sec=s;it.stop=k;}));
+});
+const BYID={};
+ORDER.forEach(k=>['x','c','n'].forEach(s=>P[k][s].forEach(it=>BYID[it.id]=it)));
+
+/* ============ FINAL CHALLENGE DATA ============ */
+const SUMBANK=['Where something formed explains what it is made of.','Gravity from big planets shapes the orbits of small bodies.','Small bodies are time capsules from 4.6 billion years ago.','Distances in the outer Solar System are huge.'];
+const PAIRS={
+ ct:{label:'C-type vs S-type asteroids',a:'C-type asteroids',b:'S-type asteroids',facts:{
+  pat:['C-types are 75% of known asteroids. S-types are 17%.','C-types are mostly in the outer belt. S-types are mostly in the inner belt.','C-types are dark. S-types are bright.','C-types hold carbon and water-bearing minerals. S-types are stony with some nickel-iron.'],
+  cause:['The inner belt was hot, so water and carbon boiled away.','The outer belt was cooler, so carbon and water-bearing minerals stayed.'],
+  impl:['The early Solar System was hot near the Sun and cool far away.','C-types are very old and nearly untouched. They are time capsules.','Water and organic molecules may have come to Earth on C-type asteroids.'],
+  scale:['Even Ceres is only 940 km wide.','Rocks in the belt are about 1 million km apart on average.','All asteroids together have only about 4% of the Moon’s mass.']}},
+ cm:{label:'Short-period vs long-period comets',a:'Short-period comets',b:'Long-period comets',facts:{
+  pat:['Short-period comets orbit in under 200 years. Long-period comets take over 200 years.','Short-period comets orbit near the flat plane of the planets, in the same direction.','Long-period comets arrive from any direction.','Both grow a coma and tails near the Sun.'],
+  cause:['Short-period comets start in the flat Kuiper Belt, so their orbits are flat.','Long-period comets start in the round Oort Cloud, so they can come from any side.','Neptune’s gravity can toss icy bodies inward onto new orbits.'],
+  impl:['The shape of each source shows how the Solar System formed: a flat disk of icy rocks and a round shell far out.','Nobody has seen the Oort Cloud. We know it is there from comet paths.'],
+  scale:['The Kuiper Belt is 30 to 50 AU out. The Oort Cloud is 2,000 to 100,000 AU out.','Halley returns every 75 years. NEOWISE returns in about 6,800 years.','The outer edge of the Oort Cloud is about 1.6 light-years away.']}},
+ bb:{label:'Asteroid Belt vs Kuiper Belt',a:'The Asteroid Belt',b:'The Kuiper Belt',facts:{
+  pat:['The Asteroid Belt is rock and metal. The Kuiper Belt is ice.','The Asteroid Belt is at 2.2 to 3.2 AU. The Kuiper Belt is at 30 to 50 AU.','Both are belts of leftover small bodies, and both have dwarf planets.'],
+  cause:['Jupiter’s gravity kept the Asteroid Belt from making a planet.','Kuiper Belt objects are very far apart, so they could not build a planet.'],
+  impl:['Rock near the Sun and ice far away shows a temperature gradient in the early Solar System.','Both belts hold leftover building blocks from 4.6 billion years ago.'],
+  scale:['The Kuiper Belt is about 20 times wider and 20 to 200 times more massive.','The Asteroid Belt has about 4% of the Moon’s mass.','The Kuiper Belt is about –220°C.']}},
+ ac:{label:'Asteroids vs comets',a:'Asteroids',b:'Comets',facts:{
+  pat:['Asteroids are mostly rock and metal. Comets are mostly ice, dust, and rock.','Asteroids do not grow tails. Comets grow a coma and tails near the Sun.','Most asteroids are in the Asteroid Belt. Comets come from the Kuiper Belt and Oort Cloud.'],
+  cause:['Near the Sun, heat turns comet ice into gas. That makes the coma and tails.','Comets formed in the cold outer Solar System, so they kept lots of ice. Many asteroids formed nearer the Sun, where ice boiled away.'],
+  impl:['Both are leftovers from the early Solar System.','Both may have brought water and organic molecules to Earth.'],
+  scale:['Comet nuclei are 1 to 50 km wide. Ceres is 940 km wide.','A coma can be hundreds of thousands of km wide. Tails can be 100 million km long.','The Asteroid Belt is 2 to 3 AU out. Comets come from 30 to 100,000 AU.']}}
+};
+const NEOS={
+ apophis:{name:'99942 Apophis',blurb:'Passes very close to Earth in 2029.',facts:{
+  size:['Apophis is about 340 m wide.'],
+  comp:['Apophis is a stony (S-type) rock.'],
+  orbit:['Apophis orbits the Sun in about 0.9 years. Its path crosses Earth’s path.'],
+  risk:['On April 13, 2029 it will pass about 32,000 km from Earth’s center. That is closer than many satellites.','Scientists say it will not hit Earth for at least 100 years.','Torino Scale: 0 (no real risk).']}},
+ bennu:{name:'101955 Bennu',blurb:'Target of OSIRIS-REx. Small chance of impact in 2182.',facts:{
+  size:['Bennu is about 490 m wide. It is shaped like a spinning top.'],
+  comp:['Bennu is a dark, carbon-rich rubble pile.','It has water-bearing minerals and organic molecules.'],
+  orbit:['Bennu orbits the Sun in about 1.2 years. Its path crosses Earth’s path.'],
+  risk:['There is about a 1 in 2,700 chance of an impact in the year 2182.','Torino Scale: 0 (no real risk now).','OSIRIS-REx measured its orbit very well.']}},
+ didymos:{name:'65803 Didymos (and Dimorphos)',blurb:'The DART test target.',facts:{
+  size:['Didymos is about 780 m wide. Its moon Dimorphos is about 160 m wide.'],
+  comp:['Didymos is a stony (S-type) rock.'],
+  orbit:['Didymos orbits the Sun in about 2.1 years. Dimorphos circles Didymos.'],
+  risk:['It is not on a path to hit Earth.','It was a safe target to test a kinetic impactor.','DART changed Dimorphos’s orbit by about 32 minutes.']}}
+};
+const TECH={
+ kin:{name:'Kinetic impactor',pro:['It is proven. DART tested it in 2022.','It worked on a rubble pile (Dimorphos).','In the Showdown it saved Earth most often.'],con:['It needs years of warning.','One hit gives only a small push.']},
+ grav:{name:'Gravity tractor',pro:['It is very gentle and precise.','It will not break up the rock.'],con:['It needs many years to work.','It has not been tested yet.']},
+ nuke:{name:'Nuclear blast near the rock',pro:['It is the strongest option.','It is a last resort when warning time is short.'],con:['It is hard to control.','The rock could break into pieces that still hit Earth.','It has never been tested in space.']},
+ beam:{name:'Laser or ion beam',pro:['It is gentle and can be controlled.'],con:['It needs a long time.','It has never been tested in space.']}
+};
+const TIMEBANK=['Find and track the object with telescopes.','Decide how big a push is needed. Use the warning time.','Build and launch a spacecraft.','Travel for months or years to reach the object.','Push the object (impact, tug, or beam).','Measure the new orbit and check the result.','Have a backup plan.'];
+const SYSBANK=['A small push early becomes a big miss later. (cause and effect)','Orbits depend on gravity from the Sun and planets. (system)','DART changed Dimorphos’s orbit by about 32 minutes.','A change in speed changes the size and timing of an orbit.','Telescopes, math models, spacecraft, and people work together as a system.'];
+
+const OPT1=[
+ {id:'o1.cmp',title:'1. Objects being compared',ask:'Which two objects did you pick? Why is it useful to compare them?',starters:['I compared ___ and ___.','I picked them because ___.'],bank:null},
+ {id:'o1.pat',title:'2. Patterns',ask:'What patterns do you see in what they are made of, where they are, and where they came from?',starters:['One pattern is ___.','The first object is mostly ___, but the second is mostly ___.'],bank:'pat'},
+ {id:'o1.cause',title:'3. Cause-and-effect in how they formed',ask:'What caused each object to form the way it did? Explain each cause and its effect.',starters:['___ caused ___.','Because ___, the result was ___.'],bank:'cause'},
+ {id:'o1.impl',title:'4. What this tells us about how the Solar System formed',ask:'What do the objects tell us about the early Solar System?',starters:['This shows that the early Solar System ___.','Scientists can use this to ___.'],bank:'impl'},
+ {id:'o1.scale',title:'5. Scale differences and why they matter',ask:'How are the two objects different in size, distance, or amount? Why does that matter?',starters:['The first is ___ times bigger or farther than the second.','This matters because ___.'],bank:'scale'},
+ {id:'o1.sum',title:'6. Final summary',ask:'Sum up what you learned. Tie your ideas together.',starters:['The big idea is ___.','The most important evidence is ___.'],bank:'sum'}
+];
+const OPT2=[
+ {id:'o2.why',title:'1. The NEO I picked, and why',ask:'Why did you pick this object? What do you want to know about it?',starters:['I picked ___ because ___.'],bank:null},
+ {id:'o2.size',title:'2a. Size',ask:'How big is it? How does its size matter for the danger it could cause?',starters:['It is about ___ wide.','That is similar to ___.'],bank:'size'},
+ {id:'o2.comp',title:'2b. Composition',ask:'What is it made of? Why does that matter for a deflection plan?',starters:['It is made of ___.','Because of this, a push might ___.'],bank:'comp'},
+ {id:'o2.orbit',title:'2c. Orbit',ask:'Where does it orbit? How long does one orbit take? Does it cross Earth’s path?',starters:['It orbits the Sun every ___.','Its path ___ Earth’s path.'],bank:'orbit'},
+ {id:'o2.risk',title:'3. Impact risk assessment',ask:'How risky is it? Use the Torino Scale, close-approach dates, and the chance of impact.',starters:['The Torino Scale rating is ___.','The next close approach is ___.'],bank:'risk'},
+ {id:'o2.tech',title:'4. Deflection technique and why it fits',ask:'Which technique is best for this object? Why is it better than the others?',starters:['The best technique is ___ because ___.','Another technique would not work as well because ___.'],bank:'tech'},
+ {id:'o2.time',title:'5. Mission timeline and what the mission needs',ask:'List the steps of your mission in order. What does each step need (time, spacecraft, money, tools)?',starters:['First, ___. Next, ___. Then, ___.','The mission needs ___.'],bank:'time'},
+ {id:'o2.sys',title:'6. Cause-and-effect and systems thinking',ask:'Explain the cause and effect of your push. How do the parts of the system work together?',starters:['The push (cause) will ___ (effect).','The parts of the system are ___.'],bank:'sys'}
+];
+const MINCHARS=60;
+const POLL={id:'fin.poll',prompt:'Which job area would you most like to try?',opts:['Planetary science (study asteroids and comets)','Planetary defense (protect Earth from impacts)','Space mining (get water and metals)','Astrobiology (look for life’s building blocks)','Mission engineering (build and fly spacecraft)']};
+const CCs=[['Patterns','Look for matches, like asteroid type and location.'],['Cause and Effect','One thing makes another happen, like Jupiter’s gravity and no planet.'],['Scale, Proportion, and Quantity','Sizes and distances change how things look and behave.'],['Systems and System Models','Parts work together, like planets, belts, and comets.'],['Energy and Matter','Energy from the Sun turns comet ice into gas.'],['Structure and Function','What something is made of depends on where it formed.'],['Stability and Change','Things change slowly, but the big picture can stay the same.']];
+
+/* ============ HELPERS ============ */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const strip=s=>String(s).replace(/<[^>]+>/g,'').replace(/&amp;/g,'&');
+function hash(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function shuffled(n,seed){const a=[...Array(n).keys()];let h=hash(seed);for(let i=n-1;i>0;i--){h=Math.imul(h^(h>>>15),2246822519)>>>0;const j=h%(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;}
+const fmtN=(n,d)=>Number(n).toLocaleString('en-US',{maximumFractionDigits:d===undefined?0:d});
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+
+const KEY='small-objects-explorer-v1';
+function blank(){return {name:'',period:'',ans:{},rev:{},done:{},step:{},max:{},lab:{},opt:null,pair:null,neo:null,neoOther:'',tech:null,w:{},chips:{},poll:null,finished:null,code:''};}
+let S=null;
+try{S=JSON.parse(localStorage.getItem(KEY));}catch(e){}
+S=Object.assign(blank(),(S&&typeof S==='object')?S:{});
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+/* ============ PROGRESS LOGIC ============ */
+const LABDONE={
+  jup:()=>{const l=S.lab.jup||{};return (l.off||0)>=5&&(l.on||0)>=5;},
+  scale:()=>{const l=S.lab.scale||{};return !!(l.marble&&l.base&&l.ball);},
+  tail:()=>{const l=S.lab.tail||{};return !!(l.far&&l.close&&l.out);},
+  origin:()=>{const l=S.lab.origin||{};return !!(l.k&&l.o);},
+  time:()=>true,
+  deflect:()=>{const l=S.lab.deflect||{};return (l.n||0)>=3&&!!l.hit&&!!l.miss&&Object.keys(l.meth||{}).length>=2;},
+  bomb:()=>{const l=S.lab.bomb||{};return (l.n||0)>=3&&!!l.solid&&!!l.rubble&&!!l.shat;},
+  show:()=>{const r=(S.lab.show||{}).runs||{};return ['kin','nuke'].every(m=>['A','B','C'].every(s=>r[s+'.'+m]));}
+};
+const reqItems=(k,s)=>P[k][s].filter(i=>!i.bonus);
+const itemsOk=(k,s)=>reqItems(k,s).every(i=>S.ans[i.id]&&S.ans[i.id].ok);
+const labsOk=k=>(P[k].labs||[]).every(l=>LABDONE[l]());
+const allRev=k=>P[k].learn.every((c,j)=>S.rev[`${k}.l.${j}`]);
+function secDone(k,s){
+  if(s==='l')return allRev(k);
+  if(s==='x')return labsOk(k)&&itemsOk(k,'x');
+  return itemsOk(k,s);
+}
+const doneCount=()=>ORDER.filter(k=>S.done[k]).length;
+
+/* ============ ITEM RENDERING ============ */
+function tagHTML(it){
+  let t='';
+  if(it.kc)t+=`<span class="qtag">Knowledge Check Q${it.kc} · ${esc(it.cc)}</span> `;
+  if(it.bonus)t+=`<span class="qtag" style="color:#6fd6ff;border-color:#2a6a80">Bonus (not required)</span> `;
+  return t?`<div>${t}</div>`:'';
+}
+function renderItem(it){
+  const st=S.ans[it.id]||{};
+  if(it.kind==='choice'){
+    const order=it.fixed?it.opts.map((_,i)=>i):shuffled(it.opts.length,it.id);
+    let h=`<div class="q">${tagHTML(it)}<p class="qt">${it.prompt}</p><div class="opts">`;
+    order.forEach(i=>{
+      let cls='opt',dis='';
+      if(st.ok&&st.val===i)cls+=' right';
+      if((st.wrong||[]).includes(i)){cls+=' wrong';dis='disabled';}
+      if(st.ok)dis='disabled';
+      h+=`<button class="${cls}" ${dis} data-act="pick" data-id="${it.id}" data-i="${i}">${esc(it.opts[i])}</button>`;
+    });
+    h+='</div>';
+    if(st.ok)h+=`<p class="fb ok">✔ Yes! ${esc(it.why)}</p>`;
+    else if((st.wrong||[]).length)h+=`<p class="fb no">Not quite. Try again.</p>`;
+    return h+'</div>';
+  }
+  if(it.kind==='select'){
+    const order=it.fixed?it.opts.map((_,i)=>i):shuffled(it.opts.length,it.id);
+    let h=`<div class="q">${tagHTML(it)}<p class="qt">${it.prompt}</p>`;
+    h+=`<select data-act="sel" data-id="${it.id}" class="${st.ok?'good':''}" ${st.ok?'disabled':''} aria-label="${esc(strip(it.prompt))}"><option value="">Choose one…</option>`;
+    order.forEach(i=>{
+      const bad=(st.wrong||[]).includes(i);
+      h+=`<option value="${i}" ${st.ok&&st.val===i?'selected':''} ${bad?'disabled':''}>${esc(it.opts[i])}${bad?'  ✖':''}</option>`;
+    });
+    h+='</select>';
+    if(st.ok)h+=`<p class="fb ok">✔ ${esc(it.why)}</p>`;
+    else if((st.wrong||[]).length)h+=`<p class="fb no">Not quite. Try another choice.</p>`;
+    return h+'</div>';
+  }
+  if(it.kind==='note'){
+    const order=shuffled(it.opts.length,it.id);
+    let h=`<div class="q"><p class="note-line">${esc(it.pre)}`;
+    if(st.ok)h+=`<b style="color:#39d98a">${esc(it.opts[it.correct])}</b>`;
+    else{
+      h+=`<select data-act="sel" data-id="${it.id}" aria-label="Pick the word that fits"><option value="">Pick…</option>`;
+      order.forEach(i=>{const bad=(st.wrong||[]).includes(i);h+=`<option value="${i}" ${bad?'disabled':''}>${esc(it.opts[i])}${bad?'  ✖':''}</option>`;});
+      h+='</select>';
+    }
+    h+=`${esc(it.post)}</p>`;
+    if(st.ok)h+=`<p class="fb ok">✔ Saved to your Note Guide.</p>`;
+    else if((st.wrong||[]).length)h+=`<p class="fb no">Not quite. Try another word.</p>`;
+    return h+'</div>';
+  }
+  return '';
+}
+
+/* ============ ANSWER LOGIC ============ */
+function record(id,i){
+  const it=BYID[id];if(!it)return;
+  const st=S.ans[id]||(S.ans[id]={tries:0,wrong:[],first:null});
+  if(st.ok)return;
+  st.tries++;
+  if(st.first===null)st.first=i;
+  if(i===it.correct){st.ok=true;st.val=i;}else st.wrong.push(i);
+  save();
+}
+
+/* ============ LAB STATE ============ */
+const J={mode:null,fast:false,rocks:[],bits:[],t:0,th:0,merged:0,shat:0,info:0,flash:0};
+const T={v:.08,play:false,info:0};
+const O={ps:[],queue:{k:0,o:0},sent:{k:0,o:0},acc:0};
+const D={method:'kin',warn:null,push:null,res:null,anim:0};
+const B={rock:null,level:null,warn:null,res:null,anim:0};
+const Sd={scen:null,meth:null,msg:''};
+const DMETH={
+ kin:{n:'Kinetic impactor',p:[['Tiny',.1],['Small',.5],['Medium',1],['Big',2]],note:'A spacecraft crashes into the rock.'},
+ grav:{n:'Gravity tractor',p:[['Tiny',.05],['Small',.1],['Medium',.2]],note:'A spacecraft tugs the rock with its gravity. It is gentle and needs many years.'},
+ beam:{n:'Laser or ion beam',p:[['Weak',.1],['Medium',.3],['Strong',.5]],note:'A beam pushes slowly. It has never been tested in space.'}
+};
+const BLEV={small:['Small blast',.5],medium:['Medium blast',2],big:['Big blast',8]};
+const hitFracFor=w=>w>=20?.1:(w>=5?.5:.9);
+function bombRun(rock,level,warn){
+  const frag=(rock==='rubble'&&level!=='small')||level==='big';
+  if(frag){const k=Math.round(hitFracFor(warn)*12);return {frag:true,k,o:k<=1?'part':'hit'};}
+  const miss=Math.round(BLEV[level][1]*warn*946.8);
+  return {frag:false,miss,o:miss>6371?'saved':'hit'};
+}
+const SCEN={A:{n:'A: Solid rock · 20 years of warning',rock:'solid',warn:20},B:{n:'B: Rubble pile · 10 years of warning',rock:'rubble',warn:10},C:{n:'C: Solid rock · 2 years of warning',rock:'solid',warn:2}};
+const SMETH={kin:{n:'Kinetic impactor',push:1.5},grav:{n:'Gravity tractor',push:.2},beam:{n:'Laser or ion beam',push:.5},nuke:{n:'Nuclear blast (medium)',push:2,blast:true}};
+function runShow(sk,mk){
+  const sc=SCEN[sk],m=SMETH[mk];
+  if(m.blast&&sc.rock==='rubble'){const k=Math.round(hitFracFor(sc.warn)*12);return {o:k<=1?'part':'hit',txt:`The rubble pile broke into 12 pieces. ${k} of them still hit Earth.`};}
+  const miss=Math.round(m.push*sc.warn*946.8),ok=miss>6371;
+  return {o:ok?'saved':'hit',txt:ok?`Saved! It misses Earth by ${fmtN(miss)} km.`:`Not enough. It moves only ${fmtN(miss)} km. It needs more than 6,371 km.`};
+}
+const SICON={saved:'✔ Saved',part:'⚠ Partly',hit:'✖ Hit'};
+
+/* ----- lab HTML ----- */
+function fmtLen(cm){
+  if(cm<100)return fmtN(cm,cm<10?1:0)+' cm';
+  if(cm<100000)return fmtN(cm/100,cm<10000?1:0)+' m';
+  return fmtN(cm/100000,cm<10000000?0:0)+' km';
+}
+const SCALEPICKS={
+  marble:{label:'Marble (1.5 cm)',cm:1.5,e:'a little bigger than a tennis ball',s:'almost as long as a school bus',d:'about a 30-minute drive'},
+  base:{label:'Baseball (7.4 cm)',cm:BASE_CM,e:'a big beach ball',s:'about half a football field',d:'about a 2-hour drive'},
+  ball:{label:'Basketball (24 cm)',cm:24,e:'taller than a 5-year-old',s:'longer than a football field',d:'about a 6-hour drive'}
+};
+const LABS={
+ jup:{html(){
+  const L=S.lab.jup||{},off=Math.min(5,Math.floor(L.off||0)),on=Math.min(5,Math.floor(L.on||0));
+  return `<div class="lab"><h3>🔬 Jupiter Switch</h3>
+  <ol class="dirs"><li>Press <b>Jupiter OFF</b>. Watch for 5 seconds.</li><li>Press <b>Jupiter ON</b>. Watch for 5 seconds.</li><li>Compare what happens to the rocks.</li></ol>
+  <canvas id="cv-jup" class="labcv" width="460" height="300" aria-label="Model of rocks in the asteroid belt. Jupiter can be turned on or off."></canvas>
+  <div class="row"><button class="tog ${J.mode==='off'?'on':''}" data-act="jupmode" data-v="off">Jupiter OFF</button><button class="tog ${J.mode==='on'?'on':''}" data-act="jupmode" data-v="on">Jupiter ON</button><button class="tog ${J.fast?'on':''}" data-act="jupfast">⏩ Fast</button><button class="tog" data-act="jupreset">↺ Restart</button></div>
+  <p class="status" id="jupInfo">Press a button to start the model.</p>
+  <div id="jupChk"><p class="chk ${off>=5?'on':''}">Jupiter OFF: ${off} of 5 seconds</p><p class="chk ${on>=5?'on':''}">Jupiter ON: ${on} of 5 seconds</p></div>
+  <p class="note">This is a simple model. Real orbits are more complex.</p></div>`;}},
+ scale:{html(){
+  const L=S.lab.scale||{};const sel=L.sel||'base';
+  const ratio=SCALEPICKS[sel].cm/PLUTO_KM;
+  const cm=SCALEPICKS[sel].cm,earth=EARTH_KM*ratio,sun=SUN_KM*ratio,dist=PLUTO_SUN_KM*ratio;
+  const chk=['marble','base','ball'].map(k=>`<p class="chk ${L[k]?'on':''}">Tried: ${SCALEPICKS[k].label}</p>`).join('');
+  return `<div class="lab"><h3>📏 Scale Model Lab: Pluto as a ball</h3>
+  <ol class="dirs"><li>Read the real numbers below.</li><li>Tap each ball size: marble, baseball, basketball.</li><li>Watch the model numbers change.</li><li>Then answer Steps 1 to 3 below. Use a calculator.</li></ol>
+  <table class="tbl"><tr><th colspan="2">Real numbers (your “knowns”)</th></tr>
+  <tr><td>Pluto’s width</td><td>${fmtN(PLUTO_KM)} km</td></tr><tr><td>Earth’s width</td><td>${fmtN(EARTH_KM)} km</td></tr><tr><td>Sun’s width</td><td>${fmtN(SUN_KM)} km</td></tr><tr><td>Pluto to Sun (average)</td><td>${fmtN(PLUTO_SUN_KM)} km</td></tr></table>
+  <div class="row">${['marble','base','ball'].map(k=>`<button class="tog ${sel===k?'on':''}" data-act="scalepick" data-v="${k}">${SCALEPICKS[k].label}</button>`).join('')}</div>
+  <table class="tbl"><tr><th>In your model</th><th>Size or distance</th><th>That is like…</th></tr>
+  <tr><td>Pluto</td><td><b>${fmtLen(cm)}</b></td><td>your ${SCALEPICKS[sel].label.split(' (')[0].toLowerCase()}</td></tr>
+  <tr><td>Earth</td><td><b>${fmtLen(earth)}</b></td><td>${SCALEPICKS[sel].e}</td></tr>
+  <tr><td>Sun’s width</td><td><b>${fmtLen(sun)}</b></td><td>${SCALEPICKS[sel].s}</td></tr>
+  <tr><td>Sun to Pluto</td><td><b>${fmtLen(dist)}</b></td><td>${SCALEPICKS[sel].d}</td></tr></table>
+  <p class="status">Scale ratio: <b>${(ratio).toPrecision(2)} cm</b> of model for every 1 km in space.</p>
+  ${chk}</div>`;}},
+ tail:{html(){
+  return `<div class="lab"><h3>☄️ Comet Tail Lab</h3>
+  <ol class="dirs"><li>Slide the comet to the far left. Look at its tail.</li><li>Slide it to <b>just left of the middle</b>. It is close to the Sun and coming <b>in</b>.</li><li>Slide it to <b>just right of the middle</b>. It is close to the Sun and going <b>out</b>.</li><li>Look at which way the tail points each time.</li></ol>
+  <canvas id="cv-tail" class="labcv" width="460" height="330" aria-label="A comet on an oval orbit around the Sun. Its tail grows near the Sun and always points away from it."></canvas>
+  <label class="note" for="tailSlider" style="display:block;margin-top:8px">Move the comet along its orbit</label>
+  <input type="range" id="tailSlider" min="0" max="1000" value="${Math.round(T.v*1000)}">
+  <div class="row"><button class="tog ${T.play?'on':''}" data-act="tailplay">${T.play?'⏸ Pause':'▶ Play'}</button></div>
+  <p class="status" id="tailInfo"></p>
+  <div id="tailChk">${tailChk()}</div></div>`;}},
+ origin:{html(){
+  return `<div class="lab"><h3>🌐 Where do comets come from?</h3>
+  <ol class="dirs"><li>Press <b>Send Kuiper Belt comets</b>.</li><li>Press <b>Send Oort Cloud comets</b>.</li><li>Look at the directions the comets come from.</li></ol>
+  <canvas id="cv-orig" class="labcv" width="460" height="250" aria-label="Side view of the Solar System. Kuiper Belt comets come from a flat disk. Oort Cloud comets come from all directions."></canvas>
+  <div class="row"><button class="tog" data-act="orig" data-v="k">Send Kuiper Belt comets</button><button class="tog" data-act="orig" data-v="o">Send Oort Cloud comets</button></div>
+  <p class="status" id="origInfo">Not to scale. The Oort Cloud is really thousands of times farther out.</p>
+  <div id="origChk">${origChk()}</div></div>`;}},
+ time:{html(){
+  return `<div class="lab"><h3>🕒 Mission Timeline</h3>
+  <ol class="dirs"><li>Scroll the timeline.</li><li>Use it to help with the match questions below.</li></ol>
+  <div class="tl">${TIMELINE.map(t=>`<div><i>${t[0]}</i><b>${esc(t[1])}</b></div>`).join('')}</div></div>
+  <h3 class="qh">Mission Match</h3><p class="lead">Pick the mission that fits each clue.</p>`;}},
+ deflect:{html(){
+  const L=S.lab.deflect||{n:0},M=DMETH[D.method],W=[1,3,5,10,20,50];
+  let info='Pick a method, a warning time, and a push size. Then press Test.';
+  if(D.res){info=D.res.ok?`<b style="color:#39d98a">It misses!</b> The rock passes ${fmtN(D.res.miss)} km from the target. That is more than Earth’s radius (6,371 km).`:`<b style="color:#ff9a3d">It still hits.</b> The rock moves only ${fmtN(D.res.miss)} km. Earth’s radius is 6,371 km, so it needs more.`;}
+  const mc=Object.keys(L.meth||{}).length;
+  return `<div class="lab"><h3>🛡️ Lab 1: Push it away (deflection)</h3>
+  <ol class="dirs"><li>Pick a <b>method</b>.</li><li>Pick how many years of <b>warning</b> you have.</li><li>Pick how big a <b>push</b> to give the asteroid.</li><li>Press <b>Test</b>.</li><li>Run at least 3 tests. Use at least 2 methods. Find one that misses and one that still hits.</li></ol>
+  <canvas id="cv-def" class="labcv" width="460" height="210" aria-label="An asteroid heading for Earth. A push changes its path."></canvas>
+  <p class="note" style="margin:10px 0 4px">Method</p>
+  <div class="row" style="margin-top:0">${Object.keys(DMETH).map(k=>`<button class="tog ${D.method===k?'on':''}" data-act="dmethod" data-v="${k}">${DMETH[k].n}</button>`).join('')}</div>
+  <p class="note" style="margin:2px 0 0">${M.note}</p>
+  <p class="note" style="margin:10px 0 4px">Warning time</p>
+  <div class="row" style="margin-top:0">${W.map(w=>`<button class="tog ${D.warn===w?'on':''}" data-act="dwarn" data-v="${w}">${w} ${w===1?'year':'years'}</button>`).join('')}</div>
+  <p class="note" style="margin:10px 0 4px">Push size (a speed change along the asteroid’s path)</p>
+  <div class="row" style="margin-top:0">${M.p.map(p=>`<button class="tog ${D.push===p[1]?'on':''}" data-act="dpush" data-v="${p[1]}">${p[0]} · ${p[1]} cm/s</button>`).join('')}</div>
+  <div class="row"><button class="btn warm" data-act="dtest" ${D.warn&&D.push?'':'disabled'}>Test it ▶</button></div>
+  <p class="status" id="defInfo">${info}</p>
+  <p class="chk ${(L.n||0)>=3?'on':''}">Tests run: ${L.n||0} of 3</p>
+  <p class="chk ${mc>=2?'on':''}">Used 2 different methods (${mc} so far)</p>
+  <p class="chk ${L.miss?'on':''}">Found a push that misses</p>
+  <p class="chk ${L.hit?'on':''}">Found a push that still hits</p>
+  <p class="note">Simple model with example numbers: miss distance ≈ 3 × push × warning time. A real plan adds extra safety room.</p></div>`;}},
+ bomb:{html(){
+  const L=S.lab.bomb||{n:0};
+  let info='Pick a rock, a blast size, and a warning time. Then press Detonate.';
+  const R=B.res;
+  if(R){
+    if(R.frag)info=`<b style="color:#ff9a3d">The rock shattered into 12 pieces.</b> <b>${R.k} of 12</b> pieces still hit Earth. ${R.o==='part'?'That is better, but it is still dangerous.':'The pieces did not have time to spread out. Many still hit.'}`;
+    else if(R.o==='saved')info=`<b style="color:#39d98a">The blast pushed the rock and it misses!</b> It passes ${fmtN(R.miss)} km from the target.`;
+    else info=`<b style="color:#ff9a3d">The push was too small.</b> The rock moves only ${fmtN(R.miss)} km. Earth’s radius is 6,371 km.`;
+  }
+  const tg=(k,lbl,cur,act)=>`<button class="tog ${cur===k?'on':''}" data-act="${act}" data-v="${k}">${lbl}</button>`;
+  return `<div class="lab"><h3>💥 Lab 2: Blast it (the bomb idea)</h3>
+  <ol class="dirs"><li>Pick the <b>rock type</b>.</li><li>Pick the <b>blast size</b>.</li><li>Pick the <b>warning time</b>.</li><li>Press <b>Detonate</b>.</li><li>Run at least 3 tests. Try both rock types. Try a big blast.</li></ol>
+  <canvas id="cv-bomb" class="labcv" width="460" height="230" aria-label="A blast near an asteroid heading for Earth. The rock may be pushed or may shatter."></canvas>
+  <p class="note" style="margin:10px 0 4px">Rock type</p>
+  <div class="row" style="margin-top:0">${tg('solid','Solid rock',B.rock,'brock')}${tg('rubble','Rubble pile (loose rocks)',B.rock,'brock')}</div>
+  <p class="note" style="margin:10px 0 4px">Blast size</p>
+  <div class="row" style="margin-top:0">${Object.keys(BLEV).map(k=>tg(k,BLEV[k][0],B.level,'blevel')).join('')}</div>
+  <p class="note" style="margin:10px 0 4px">Warning time</p>
+  <div class="row" style="margin-top:0">${[1,5,20].map(w=>tg(String(w),`${w} ${w===1?'year':'years'}`,B.warn===null?null:String(B.warn),'bwarn')).join('')}</div>
+  <div class="row"><button class="btn warm" data-act="btest" ${B.rock&&B.level&&B.warn?'':'disabled'}>💥 Detonate ▶</button></div>
+  <p class="status" id="bombInfo">${info}</p>
+  <p class="chk ${(L.n||0)>=3?'on':''}">Tests run: ${L.n||0} of 3</p>
+  <p class="chk ${L.solid&&L.rubble?'on':''}">Tried both rock types</p>
+  <p class="chk ${L.shat?'on':''}">Saw a rock shatter</p>
+  <p class="note">Simple model with example numbers. Real blasts are much more complex.</p></div>`;}},
+ show:{html(){
+  const L=S.lab.show||{runs:{}},runs=L.runs||{};
+  const cell=(sk,mk)=>{const r=runs[sk+'.'+mk];return r?`<td class="${r}">${SICON[r]}</td>`:'<td>–</td>';};
+  const tg=(k,lbl,cur,act)=>`<button class="tog ${cur===k?'on':''}" data-act="${act}" data-v="${k}">${lbl}</button>`;
+  const need=[];['kin','nuke'].forEach(m=>['A','B','C'].forEach(s=>{if(!runs[s+'.'+m])need.push(s+'.'+m);}));
+  return `<div class="lab"><h3>🏆 Lab 3: Showdown. Which saved Earth best?</h3>
+  <ol class="dirs"><li>Pick a <b>scenario</b>.</li><li>Pick a <b>method</b>.</li><li>Press <b>Run</b>.</li><li>Run the <b>kinetic impactor</b> and the <b>nuclear blast</b> in all 3 scenarios.</li><li>Read the scoreboard.</li></ol>
+  <div class="row">${Object.keys(SCEN).map(k=>tg(k,SCEN[k].n,Sd.scen,'sscen')).join('')}</div>
+  <div class="row">${Object.keys(SMETH).map(k=>tg(k,SMETH[k].n,Sd.meth,'smeth')).join('')}</div>
+  <div class="row"><button class="btn warm" data-act="srun" ${Sd.scen&&Sd.meth?'':'disabled'}>Run ▶</button></div>
+  <p class="status">${Sd.msg||'Pick a scenario and a method.'}</p>
+  <table class="tbl sb"><tr><th>Scenario</th>${Object.keys(SMETH).map(m=>`<th>${SMETH[m].n.replace(' (medium)','')}</th>`).join('')}</tr>
+  ${Object.keys(SCEN).map(s=>`<tr><td>${SCEN[s].n}</td>${Object.keys(SMETH).map(m=>cell(s,m)).join('')}</tr>`).join('')}</table>
+  <p class="chk ${need.length===0?'on':''}">Ran kinetic impactor and nuclear blast in all 3 scenarios (${6-need.length} of 6)</p>
+  <p class="note">Simple model with example numbers. It shows ideas, not exact answers.</p></div>`;}}
+};
+function tailChk(){const l=S.lab.tail||{};return `<p class="chk ${l.far?'on':''}">Seen: far from the Sun (almost no tail)</p><p class="chk ${l.close?'on':''}">Seen: close to the Sun, coming in (long tail)</p><p class="chk ${l.out?'on':''}">Seen: leaving the Sun (tail-first!)</p>`;}
+function origChk(){const l=S.lab.origin||{};return `<p class="chk ${l.k?'on':''}">Sent Kuiper Belt comets</p><p class="chk ${l.o?'on':''}">Sent Oort Cloud comets</p>`;}
+
+/* ============ PANEL ============ */
+let cur=null;
+const panel=$('#panel');
+function cardsHTML(k){
+  return '<div class="cards">'+P[k].learn.map((c,j)=>{
+    const id=`${k}.l.${j}`,open=!!S.rev[id];
+    return `<button class="card ${open?'open':''}" style="border-left-color:${P[k].color}" data-act="rev" data-id="${id}" aria-expanded="${open}">
+      <span class="ct">${c[0]}</span>
+      <span class="cb">${open?c[1]:'Tap to read'}</span>
+      ${open&&c[2]?`<span class="vo">${c[2]}</span>`:''}</button>`;
+  }).join('')+'</div>';
+}
+function bodyHTML(k,s){
+  const p=P[k];
+  if(s==='l'){
+    const n=p.learn.filter((c,j)=>S.rev[`${k}.l.${j}`]).length,tot=p.learn.length;
+    return `<ol class="dirs"><li>Tap a card to open it.</li><li>Read it.</li><li>Open all ${tot} cards to unlock Explore.</li></ol>`+cardsHTML(k)+
+      (n<tot?`<div class="lock">🔒 ${n} of ${tot} cards open.</div>`:`<div class="lock" style="color:#39d98a;border-color:#1c7a4d;background:#06210f">✔ All cards open. Press “Next step.”</div>`);
+  }
+  if(s==='x'){
+    let h='';
+    (p.labs||[]).forEach(l=>h+=LABS[l].html());
+    if(p.x.length){
+      if(!(p.labs||[]).includes('time'))h+=`<h3 class="qh">${k==='belt'?'Sort the rocks':'Do the math'}</h3><ol class="dirs"><li>Read each question.</li><li>${k==='belt'?'Pick the rock type.':'Use a calculator.'}</li><li>Pick one answer.</li></ol>`;
+      h+=p.x.map(renderItem).join('');
+    }
+    return h;
+  }
+  if(s==='c')return `<ol class="dirs"><li>Read each question.</li><li>Pick one answer.</li><li>If it turns red, try again.</li></ol>`+p.c.map(renderItem).join('');
+  if(s==='n')return `<ol class="dirs"><li>Read each sentence.</li><li>Pick the word that fits.</li><li>These sentences go into your Note Guide.</li></ol>`+p.n.map(renderItem).join('');
+  return '';
+}
+function renderPanel(){
+  if(!cur){panel.classList.remove('open');panel.innerHTML='';return;}
+  const k=cur,p=P[k],si=S.step[k]||0,s=SECS[si],max=S.max[k]||0;
+  const old=$('#pbody'),st=old?old.scrollTop:0;
+  const done=!!S.done[k];
+  let h=`<div class="phead" style="border-top-color:${p.color}"><div class="pico" style="border-color:${p.color};color:${p.color}">${p.sym}</div><div><h2>${p.name}</h2><p>${p.au} · ${p.tag}</p></div><button class="x" data-act="close">Back to sky</button></div>`;
+  h+='<div id="steps">'+SECS.map((x,i)=>`<button class="stp ${i===si?'cur':''} ${secDone(k,x)?'ok':''}" data-act="step" data-i="${i}" ${i>max?'disabled':''}>${secDone(k,x)?'✔ ':''}${SECNAME[x]}</button>`).join('')+'</div>';
+  h+=`<div id="pbody">${bodyHTML(k,s)}</div>`;
+  const ok=secDone(k,s);
+  h+=`<div id="pfoot"><button class="btn ghost" data-act="prev" ${si===0?'disabled':''}>◀ Back</button>`;
+  if(si<3)h+=`<button class="btn go" id="nextBtn" data-act="next" ${ok?'':'disabled'}>Next step ▶</button>`;
+  else h+=`<button class="btn go" id="finBtn" data-act="finishStop" ${ok?'':'disabled'}>${done?'Back to sky':'Finish '+p.name+' ✔'}</button>`;
+  h+='</div>';
+  panel.innerHTML=h;panel.classList.add('open');
+  const nb=$('#pbody');if(nb)nb.scrollTop=st;
+}
+function refreshGate(){
+  if(!cur)return;
+  const k=cur,si=S.step[k]||0,s=SECS[si],ok=secDone(k,s);
+  const nb=$('#nextBtn');if(nb)nb.disabled=!ok;
+  const fb=$('#finBtn');if(fb)fb.disabled=!ok;
+  document.querySelectorAll('#steps .stp').forEach((b,i)=>{const d=secDone(k,SECS[i]);b.classList.toggle('ok',d);b.textContent=(d?'✔ ':'')+SECNAME[SECS[i]];});
+}
+function openStop(k){
+  cur=k;if(S.step[k]===undefined){S.step[k]=0;S.max[k]=0;}
+  save();renderPanel();renderChrome();
+  setTimeout(resize,30);
+  const b=$('#pbody');if(b)b.scrollTop=0;
+}
+function closePanel(){cur=null;renderPanel();renderChrome();setTimeout(resize,30);}
+
+/* ============ CLICK HANDLING ============ */
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]');if(!t||t.tagName==='SELECT')return;
+  const a=t.dataset.act;
+  if(a==='rev'){S.rev[t.dataset.id]=true;save();renderPanel();}
+  else if(a==='pick'){record(t.dataset.id,+t.dataset.i);renderPanel();}
+  else if(a==='close')closePanel();
+  else if(a==='step'){S.step[cur]=+t.dataset.i;save();renderPanel();}
+  else if(a==='prev'){S.step[cur]=Math.max(0,(S.step[cur]||0)-1);save();renderPanel();}
+  else if(a==='next'){const n=(S.step[cur]||0)+1;S.step[cur]=n;S.max[cur]=Math.max(S.max[cur]||0,n);save();renderPanel();const b=$('#pbody');if(b)b.scrollTop=0;}
+  else if(a==='finishStop'){S.done[cur]=true;save();closePanel();}
+  /* labs */
+  else if(a==='jupmode'){const m=t.dataset.v;if(J.mode!==m){jupReset(m);}renderPanel();}
+  else if(a==='jupfast'){J.fast=!J.fast;renderPanel();}
+  else if(a==='jupreset'){jupReset(J.mode);renderPanel();}
+  else if(a==='scalepick'){const L=S.lab.scale||(S.lab.scale={});L.sel=t.dataset.v;L[t.dataset.v]=true;save();renderPanel();}
+  else if(a==='tailplay'){T.play=!T.play;renderPanel();}
+  else if(a==='orig'){const m=t.dataset.v;O.queue[m]+=20;O.sent[m]+=20;const L=S.lab.origin||(S.lab.origin={});L[m]=true;save();const c=$('#origChk');if(c)c.innerHTML=origChk();refreshGate();}
+  else if(a==='dmethod'){D.method=t.dataset.v;D.push=null;D.res=null;renderPanel();}
+  else if(a==='brock'){B.rock=t.dataset.v;renderPanel();}
+  else if(a==='blevel'){B.level=t.dataset.v;renderPanel();}
+  else if(a==='bwarn'){B.warn=+t.dataset.v;renderPanel();}
+  else if(a==='btest'){
+    const r=bombRun(B.rock,B.level,B.warn);r.rock=B.rock;r.level=B.level;r.warn=B.warn;
+    const er=34;r.offs=[];
+    if(r.frag){const hits=r.k;for(let i=0;i<12;i++){const sg=i%2?1:-1;r.offs.push(i<hits?(Math.random()-.5)*er*1.4:sg*(er+10+Math.random()*55));}}
+    else r.offs=[Math.min(95,r.miss/6371*er)];
+    B.res=r;B.anim=0;
+    const L=S.lab.bomb||(S.lab.bomb={n:0});L.n=(L.n||0)+1;L[B.rock]=true;if(r.frag)L.shat=true;save();renderPanel();
+  }
+  else if(a==='sscen'){Sd.scen=t.dataset.v;renderPanel();}
+  else if(a==='smeth'){Sd.meth=t.dataset.v;renderPanel();}
+  else if(a==='srun'){
+    const r=runShow(Sd.scen,Sd.meth);Sd.msg=`<b>${SCEN[Sd.scen].n}</b> with <b>${SMETH[Sd.meth].n}</b>: ${r.txt}`;
+    const L=S.lab.show||(S.lab.show={runs:{}});L.runs=L.runs||{};L.runs[Sd.scen+'.'+Sd.meth]=r.o;save();renderPanel();
+  }
+  else if(a==='dwarn'){D.warn=+t.dataset.v;renderPanel();}
+  else if(a==='dpush'){D.push=+t.dataset.v;renderPanel();}
+  else if(a==='dtest'){
+    const miss=D.push*D.warn*946.8;const ok=miss>6371;
+    D.res={miss:Math.round(miss),ok,warn:D.warn,push:D.push};D.anim=0;
+    const L=S.lab.deflect||(S.lab.deflect={n:0});L.n=(L.n||0)+1;L.meth=L.meth||{};L.meth[D.method]=true;if(ok)L.miss=true;else L.hit=true;save();renderPanel();
+  }
+});
+document.addEventListener('change',e=>{
+  const t=e.target;if(!t.matches||!t.matches('select[data-act="sel"]'))return;
+  if(t.value==='')return;
+  record(t.dataset.id,+t.value);renderPanel();
+});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='tailSlider'){T.v=(+t.value)/1000;T.play=false;const b=document.querySelector('[data-act="tailplay"]');if(b){b.textContent='▶ Play';b.classList.remove('on');}}
+});
+
+/* ============ JUPITER SWITCH MODEL ============ */
+function jupReset(mode){
+  J.mode=mode;J.t=0;J.th=0;J.bits=[];J.merged=0;J.shat=0;J.rocks=[];
+  for(let i=0;i<64;i++)J.rocks.push({a:Math.random()*6.2832,r:1+(Math.random()-.5)*.16,s:1.6+Math.random()*1.5,e:0,ph:Math.random()*6.2832,da:0,cd:0});
+}
+function jupPos(r){
+  const R=92;
+  const rr=1+(r.r-1)+(J.mode==='on'?r.e*.3*Math.sin(r.ph+J.t*1.1):0);
+  const aa=r.a+(J.mode==='on'?r.e*.35*Math.sin(r.ph*1.7+J.t*.8):0)+J.th;
+  return [230+Math.cos(aa)*R*rr,150+Math.sin(aa)*R*rr];
+}
+function stepJup(dt){
+  const rocks=J.rocks;
+  if(J.mode==='off'){
+    rocks.sort((p,q)=>p.a-q.a);
+    const n=rocks.length;
+    rocks.forEach(r=>{r.da=0;r.r+=(1-r.r)*Math.min(1,dt*.6);});
+    for(let i=0;i<n;i++){
+      const a=rocks[i],b=rocks[(i+1)%n];if(a===b)continue;
+      let d=b.a-a.a;if(d<0)d+=6.2832;
+      const pull=dt*.0035/(d+.12);
+      a.da+=pull*(b.s*b.s/5);b.da-=pull*(a.s*a.s/5);
+    }
+    rocks.forEach(r=>{r.a+=r.da;});
+    for(let i=0;i<rocks.length;i++){
+      const a=rocks[i],b=rocks[(i+1)%rocks.length];if(!b||a===b)continue;
+      let d=b.a-a.a;if(d<0)d+=6.2832;
+      if(d*92<(a.s+b.s)*.95){
+        const tot=a.s*a.s+b.s*b.s;
+        a.a=a.a+d*(b.s*b.s/tot);a.s=Math.sqrt(tot);a.r=(a.r+b.r)/2;
+        rocks.splice((i+1)%rocks.length,1);J.merged++;i--;
+        if(rocks.length<2)break;
+      }
+    }
+  }else if(J.mode==='on'){
+    rocks.forEach(r=>{r.e=Math.min(1,r.e+dt*.25);r.cd=Math.max(0,r.cd-dt);});
+    if(J.t>1.5&&rocks.length<150){
+      const pts=rocks.map(jupPos);
+      const out=[];const dead=new Set();
+      for(let i=0;i<rocks.length;i++){
+        if(dead.has(i))continue;
+        for(let j=i+1;j<rocks.length;j++){
+          if(dead.has(j))continue;
+          const dx=pts[i][0]-pts[j][0],dy=pts[i][1]-pts[j][1];
+          if(dx*dx+dy*dy<Math.pow((rocks[i].s+rocks[j].s)*.8,2)&&rocks[i].cd<=0&&rocks[j].cd<=0&&rocks[i].e>.4){
+            J.shat++;dead.add(i);dead.add(j);
+            [i,j].forEach(q=>{
+              const r=rocks[q];
+              for(let m=0;m<2;m++)if(r.s>1.3&&rocks.length+out.length<150)out.push({a:r.a+(m?.02:-.02),r:r.r,s:Math.max(.9,r.s*.7),e:r.e,ph:Math.random()*6.2832,da:0,cd:1.5});
+              J.bits.push({x:pts[q][0],y:pts[q][1],life:.5});
+            });
+            break;
+          }
+        }
+      }
+      if(dead.size){J.rocks=rocks.filter((r,i)=>!dead.has(i)).concat(out);}
+    }
+  }
+  J.bits.forEach(b=>b.life-=dt);J.bits=J.bits.filter(b=>b.life>0);
+}
+function drawJup(dt,now){
+  const c=document.getElementById('cv-jup');if(!c)return;
+  const g=c.getContext('2d');
+  if(!J.rocks.length)jupReset(null);
+  if(J.mode){
+    const dtm=dt*(J.fast?3:1);J.t+=dtm;J.th+=dtm*.3;
+    const L=S.lab.jup||(S.lab.jup={});
+    const before=(L[J.mode]||0)>=5;L[J.mode]=(L[J.mode]||0)+dt;
+    if(!before&&L[J.mode]>=5){save();refreshGate();}
+    stepJup(dtm);
+  }
+  g.clearRect(0,0,460,300);
+  g.fillStyle='#040810';g.fillRect(0,0,460,300);
+  for(let i=0;i<40;i++){g.fillStyle='rgba(200,220,255,.35)';g.fillRect((i*97)%460,(i*61)%300,1.2,1.2);}
+  g.strokeStyle='rgba(217,179,108,.18)';g.lineWidth=18;g.beginPath();g.arc(230,150,92,0,6.2832);g.stroke();
+  g.strokeStyle='rgba(111,214,255,.25)';g.lineWidth=1;g.setLineDash([4,5]);g.beginPath();g.arc(230,150,138,0,6.2832);g.stroke();g.setLineDash([]);
+  // sun
+  const sg=g.createRadialGradient(230,150,2,230,150,34);sg.addColorStop(0,'rgba(255,240,150,1)');sg.addColorStop(.3,'rgba(255,170,40,.7)');sg.addColorStop(1,'rgba(255,120,0,0)');
+  g.fillStyle=sg;g.beginPath();g.arc(230,150,34,0,6.2832);g.fill();
+  // rocks
+  let big=0;
+  J.rocks.forEach(r=>{
+    const p=jupPos(r);big=Math.max(big,r.s);
+    const grd=g.createRadialGradient(p[0]-r.s*.3,p[1]-r.s*.3,r.s*.1,p[0],p[1],r.s);
+    grd.addColorStop(0,'#e8d3a6');grd.addColorStop(1,r.s>8?'#7a5a30':'#8a7452');
+    g.fillStyle=grd;g.beginPath();g.arc(p[0],p[1],r.s,0,6.2832);g.fill();
+  });
+  J.bits.forEach(b=>{g.strokeStyle=`rgba(255,160,80,${b.life*1.6})`;g.lineWidth=2;g.beginPath();g.arc(b.x,b.y,(0.5-b.life)*26+3,0,6.2832);g.stroke();});
+  // jupiter
+  const ja=-J.t*.12+2.2,jx=230+Math.cos(ja)*138,jy=150+Math.sin(ja)*138;
+  if(J.mode==='on'){
+    for(let k=0;k<3;k++){const ph=((J.t*.6+k/3)%1);g.strokeStyle=`rgba(255,190,120,${(1-ph)*.5})`;g.lineWidth=2;g.beginPath();g.arc(jx,jy,12+ph*60,0,6.2832);g.stroke();}
+  }
+  g.globalAlpha=J.mode==='on'?1:.28;
+  const jg=g.createRadialGradient(jx-3,jy-3,2,jx,jy,13);jg.addColorStop(0,'#f6dcb0');jg.addColorStop(1,'#a8683a');
+  g.fillStyle=jg;g.beginPath();g.arc(jx,jy,13,0,6.2832);g.fill();
+  g.globalAlpha=1;g.font='12px Trebuchet MS, Arial';g.fillStyle=J.mode==='on'?'#ffd9a0':'#7a8aa8';g.textAlign='center';
+  g.fillText(J.mode==='on'?'Jupiter':'Jupiter (off)',jx,jy+26);
+  g.fillStyle='#d9b36c';g.fillText('rock ring',230,150-92-14);
+  // info text (4 times a second)
+  if(now-J.info>250){
+    J.info=now;
+    const el=document.getElementById('jupInfo');
+    if(el){
+      if(!J.mode)el.innerHTML='Press a button to start the model.';
+      else if(J.mode==='off')el.innerHTML=`<b>Jupiter OFF.</b> Rocks pull together and stick. Biggest rock: <b>${big.toFixed(1)}</b>. Rocks left: <b>${J.rocks.length}</b>.${big>=9?' <b style="color:#39d98a">A planet is growing!</b>':''}`;
+      else el.innerHTML=`<b>Jupiter ON.</b> Its gravity stirs the rocks. They crash and break. Crashes: <b>${J.shat}</b>. Pieces: <b>${J.rocks.length}</b>. Biggest rock: <b>${big.toFixed(1)}</b>.`;
+    }
+    const ch=document.getElementById('jupChk');
+    if(ch){const L=S.lab.jup||{},o=Math.min(5,Math.floor(L.off||0)),n=Math.min(5,Math.floor(L.on||0));
+      ch.innerHTML=`<p class="chk ${o>=5?'on':''}">Jupiter OFF: ${o} of 5 seconds</p><p class="chk ${n>=5?'on':''}">Jupiter ON: ${n} of 5 seconds</p>`;}
+  }
+}
+
+/* ============ COMET TAIL LAB ============ */
+function kepler(M,e){M=((M%6.2832)+6.2832)%6.2832;let E=M;for(let i=0;i<9;i++)E=E-(E-e*Math.sin(E)-M)/(1-e*Math.cos(E));return E;}
+const CA=3.6,CE=.82,CB=CA*Math.sqrt(1-CE*CE);
+function cometGeom(v){
+  const M=Math.PI+2*Math.PI*v,E=kepler(M,CE);
+  return {x:CA*(Math.cos(E)-CE),y:CB*Math.sin(E),r:CA*(1-CE*Math.cos(E))};
+}
+const cometAct=r=>Math.pow(clamp((4.2-r)/3.6,0,1),1.4);
+function drawCometTail(g,px,py,dx,dy,vx,vy,act,kLen){
+  const Li=150*act*kLen,Ld=95*act*kLen;
+  if(act>.02){
+    const gr=g.createLinearGradient(px,py,px+dx*Li,py+dy*Li);gr.addColorStop(0,'rgba(120,200,255,.95)');gr.addColorStop(1,'rgba(120,200,255,0)');
+    g.strokeStyle=gr;g.lineWidth=2+2.5*act;g.lineCap='round';g.beginPath();g.moveTo(px,py);g.lineTo(px+dx*Li,py+dy*Li);g.stroke();
+    const ex=px+dx*Ld-vx*Ld*.45,ey=py+dy*Ld-vy*Ld*.45;
+    const gr2=g.createLinearGradient(px,py,ex,ey);gr2.addColorStop(0,'rgba(255,230,160,.85)');gr2.addColorStop(1,'rgba(255,230,160,0)');
+    g.strokeStyle=gr2;g.lineWidth=3+8*act;g.beginPath();g.moveTo(px,py);g.quadraticCurveTo(px+dx*Ld*.5,py+dy*Ld*.5,ex,ey);g.stroke();
+  }
+  const cr=4+11*act;
+  const cg=g.createRadialGradient(px,py,1,px,py,cr);cg.addColorStop(0,'rgba(230,248,255,.95)');cg.addColorStop(1,'rgba(160,220,255,0)');
+  g.fillStyle=cg;g.beginPath();g.arc(px,py,cr,0,6.2832);g.fill();
+  g.fillStyle='#cfd6de';g.beginPath();g.arc(px,py,2.4,0,6.2832);g.fill();
+}
+function drawTail(dt,now){
+  const c=document.getElementById('cv-tail');if(!c)return;
+  const g=c.getContext('2d');
+  if(T.play){T.v+=dt*.045;if(T.v>1)T.v-=1;const sl=document.getElementById('tailSlider');if(sl)sl.value=Math.round(T.v*1000);}
+  const u=52,SX=372,SY=168;
+  g.clearRect(0,0,460,330);g.fillStyle='#040810';g.fillRect(0,0,460,330);
+  for(let i=0;i<40;i++){g.fillStyle='rgba(200,220,255,.3)';g.fillRect((i*89)%460,(i*53)%300,1.2,1.2);}
+  // orbit
+  g.strokeStyle='rgba(111,214,255,.3)';g.lineWidth=1;g.setLineDash([5,5]);g.beginPath();
+  for(let i=0;i<=120;i++){const E=i/120*6.2832;const x=SX+CA*(Math.cos(E)-CE)*u,y=SY-CB*Math.sin(E)*u;i?g.lineTo(x,y):g.moveTo(x,y);}
+  g.stroke();g.setLineDash([]);
+  // sun + wind arrows
+  const sg=g.createRadialGradient(SX,SY,2,SX,SY,36);sg.addColorStop(0,'rgba(255,240,150,1)');sg.addColorStop(.3,'rgba(255,170,40,.75)');sg.addColorStop(1,'rgba(255,120,0,0)');
+  g.fillStyle=sg;g.beginPath();g.arc(SX,SY,36,0,6.2832);g.fill();
+  g.fillStyle='#fff6c0';g.beginPath();g.arc(SX,SY,8,0,6.2832);g.fill();
+  g.strokeStyle='rgba(255,220,120,.35)';g.lineWidth=1.5;
+  for(let i=0;i<12;i++){const a=i/12*6.2832;g.beginPath();g.moveTo(SX+Math.cos(a)*14,SY+Math.sin(a)*14);g.lineTo(SX+Math.cos(a)*30,SY+Math.sin(a)*30);g.stroke();}
+  g.font='12px Trebuchet MS, Arial';g.fillStyle='#ffd9a0';g.textAlign='center';g.fillText('Sun',SX,SY-44);
+  g.fillStyle='rgba(255,220,120,.7)';g.fillText('sunlight + solar wind push outward',SX-20,20);
+  // comet
+  const G=cometGeom(T.v),G2=cometGeom(T.v+.004);
+  const px=SX+G.x*u,py=SY-G.y*u;
+  let dx=px-SX,dy=py-SY;const dl=Math.hypot(dx,dy)||1;dx/=dl;dy/=dl;
+  let vx=(SX+G2.x*u)-px,vy=(SY-G2.y*u)-py;const vl=Math.hypot(vx,vy)||1;vx/=vl;vy/=vl;
+  const act=cometAct(G.r);
+  drawCometTail(g,px,py,dx,dy,vx,vy,act,.62);
+  // motion arrow
+  g.strokeStyle='#39d98a';g.fillStyle='#39d98a';g.lineWidth=2;
+  const ax=px+vx*34,ay=py+vy*34;g.beginPath();g.moveTo(px+vx*14,py+vy*14);g.lineTo(ax,ay);g.stroke();
+  g.beginPath();g.moveTo(ax,ay);g.lineTo(ax-vx*7-vy*4,ay-vy*7+vx*4);g.lineTo(ax-vx*7+vy*4,ay-vy*7-vx*4);g.fill();
+  g.fillStyle='#39d98a';g.textAlign='left';g.fillText('moving',ax+(vx>=0?4:-46),ay+4);
+  // flags
+  const inb=T.v<.5;
+  const L=S.lab.tail||(S.lab.tail={});let ch=false;
+  if(act<.03&&!L.far){L.far=true;ch=true;}
+  if(inb&&act>.5&&!L.close){L.close=true;ch=true;}
+  if(!inb&&act>.5&&!L.out){L.out=true;ch=true;}
+  if(ch){save();const el=document.getElementById('tailChk');if(el)el.innerHTML=tailChk();refreshGate();}
+  if(now-T.info>250){
+    T.info=now;
+    const el=document.getElementById('tailInfo');
+    if(el){
+      const au=.59+(G.r-.65)/5.9*34.4;
+      el.innerHTML=`Distance: <b>${au<10?au.toFixed(1):Math.round(au)} AU</b> (a Halley-like orbit). Tail: <b>${act<.03?'none':act<.35?'short':act<.7?'medium':'long'}</b>. The comet is moving <b>${inb?'toward':'away from'}</b> the Sun${!inb&&act>.3?' — <b>tail-first!</b>':''}. Tail points <b>away from the Sun</b>.`;
+    }
+  }
+}
+
+/* ============ ORIGIN LAB ============ */
+function drawOrig(dt,now){
+  const c=document.getElementById('cv-orig');if(!c)return;
+  const g=c.getContext('2d'),cx=230,cy=125;
+  O.acc+=dt;
+  while(O.acc>.06){
+    O.acc-=.06;
+    if(O.queue.k>0){O.queue.k--;const side=Math.random()<.5?-1:1;O.ps.push({m:'k',x:cx+side*(120+Math.random()*95),y:cy+(Math.random()-.5)*16,t:0});}
+    if(O.queue.o>0){O.queue.o--;const a=Math.random()*6.2832;O.ps.push({m:'o',x:cx+Math.cos(a)*108,y:cy+Math.sin(a)*108,t:0});}
+  }
+  if(O.acc>1)O.acc=0;
+  g.clearRect(0,0,460,250);g.fillStyle='#040810';g.fillRect(0,0,460,250);
+  // oort shell
+  g.strokeStyle='rgba(57,217,138,.4)';g.setLineDash([3,5]);g.lineWidth=1.5;g.beginPath();g.arc(cx,cy,108,0,6.2832);g.stroke();g.setLineDash([]);
+  g.fillStyle='rgba(57,217,138,.9)';g.font='12px Trebuchet MS, Arial';g.textAlign='center';g.fillText('Oort Cloud (round shell)',cx,cy-114);
+  // kuiper disk
+  g.fillStyle='rgba(74,158,255,.18)';g.fillRect(20,cy-9,420,18);
+  g.fillStyle='rgba(111,214,255,.95)';g.fillText('Kuiper Belt (flat disk)',cx+120,cy+30);
+  // plane
+  g.strokeStyle='rgba(255,255,255,.2)';g.setLineDash([2,4]);g.beginPath();g.moveTo(10,cy);g.lineTo(450,cy);g.stroke();g.setLineDash([]);
+  g.fillStyle='rgba(255,255,255,.55)';g.textAlign='left';g.fillText('planets’ plane',14,cy-14);
+  // sun
+  const sg=g.createRadialGradient(cx,cy,2,cx,cy,26);sg.addColorStop(0,'rgba(255,240,150,1)');sg.addColorStop(.35,'rgba(255,170,40,.7)');sg.addColorStop(1,'rgba(255,120,0,0)');
+  g.fillStyle=sg;g.beginPath();g.arc(cx,cy,26,0,6.2832);g.fill();
+  // particles
+  O.ps.forEach(p=>{
+    p.t+=dt/2.6;
+    if(p.t<0)return;
+    const e=Math.pow(clamp(p.t,0,1),1.35);
+    const sx=p.m==='k'?p.x:p.x,sy=p.y;
+    const x=sx+(cx-sx)*e,y=sy+(cy-sy)*e;
+    const col=p.m==='k'?'111,214,255':'57,217,138';
+    for(let i=1;i<=9;i++){
+      const ee=Math.pow(clamp(p.t-i*.012,0,1),1.35);
+      g.fillStyle=`rgba(${col},${(1-i/10)*.4*(1-e*.6)})`;
+      g.beginPath();g.arc(sx+(cx-sx)*ee,sy+(cy-sy)*ee,3-i*.2,0,6.2832);g.fill();
+    }
+    g.fillStyle=`rgba(${col},${1-e*.7})`;g.beginPath();g.arc(x,y,3.2,0,6.2832);g.fill();
+  });
+  O.ps=O.ps.filter(p=>p.t<1);
+  if(now-(O.info||0)>300){
+    O.info=now;const el=document.getElementById('origInfo');
+    if(el&&(O.sent.k||O.sent.o))el.innerHTML=`Kuiper comets sent: <b>${O.sent.k}</b> · Oort comets sent: <b>${O.sent.o}</b>. Kuiper comets stay near the planets’ plane. Oort comets come from <b>every</b> direction.`;
+  }
+}
+
+/* ============ DEFLECTION LAB ============ */
+function drawDef(dt,now){
+  const c=document.getElementById('cv-def');if(!c)return;
+  const g=c.getContext('2d'),ex=392,ey=105,er=34,sx=38,sy=105;
+  g.clearRect(0,0,460,210);g.fillStyle='#040810';g.fillRect(0,0,460,210);
+  for(let i=0;i<40;i++){g.fillStyle='rgba(200,220,255,.3)';g.fillRect((i*83)%460,(i*47)%210,1.2,1.2);}
+  // earth
+  const eg=g.createRadialGradient(ex-10,ey-10,4,ex,ey,er);eg.addColorStop(0,'#8fd0ff');eg.addColorStop(.7,'#1f64c8');eg.addColorStop(1,'#0b2a66');
+  g.fillStyle=eg;g.beginPath();g.arc(ex,ey,er,0,6.2832);g.fill();
+  g.fillStyle='#9fe3a8';g.beginPath();g.arc(ex-8,ey-4,9,0,6.2832);g.fill();g.beginPath();g.arc(ex+10,ey+12,6,0,6.2832);g.fill();
+  g.font='12px Trebuchet MS, Arial';g.fillStyle='#d9e4f7';g.textAlign='center';g.fillText('Earth',ex,ey+er+16);
+  // radius marker
+  g.strokeStyle='rgba(255,255,255,.7)';g.setLineDash([3,3]);g.beginPath();g.moveTo(ex+er+8,ey);g.lineTo(ex+er+8,ey-er);g.stroke();g.setLineDash([]);
+  g.fillStyle='#fff';g.textAlign='left';g.fillText('Earth’s radius',ex-30,24);
+  g.beginPath();g.moveTo(ex+er+8,ey-er);g.lineTo(ex+er+3,ey-er+6);g.lineTo(ex+er+13,ey-er+6);g.fill();
+  // old path
+  g.strokeStyle='rgba(255,107,107,.7)';g.setLineDash([6,5]);g.lineWidth=1.5;g.beginPath();g.moveTo(sx,sy);g.lineTo(ex,ey);g.stroke();g.setLineDash([]);
+  g.fillStyle='rgba(255,107,107,.9)';g.textAlign='left';g.fillText('old path',sx+4,sy+22);
+  if(!D.res){
+    g.fillStyle='#d9b36c';g.beginPath();g.arc(sx,sy,6,0,6.2832);g.fill();
+    return;
+  }
+  const off=Math.min(95,D.res.miss/6371*er);
+  const tx=ex,ty=ey-off;
+  D.anim=Math.min(1,D.anim+dt/2.2);
+  const t=D.anim;
+  g.strokeStyle=D.res.ok?'rgba(57,217,138,.9)':'rgba(255,154,61,.9)';g.lineWidth=2;g.beginPath();g.moveTo(sx,sy);g.lineTo(tx,ty);g.stroke();
+  const ax=sx+(tx-sx)*t,ay=sy+(ty-sy)*t;
+  g.fillStyle='#d9b36c';g.beginPath();g.arc(ax,ay,6,0,6.2832);g.fill();
+  g.fillStyle=D.res.ok?'#39d98a':'#ff9a3d';g.textAlign='left';g.fillText('new path',sx+4,sy-12);
+  if(t>=1){
+    if(D.res.ok){g.fillStyle='#39d98a';g.font='bold 20px Trebuchet MS, Arial';g.textAlign='center';g.fillText('MISS ✔',230,190);}
+    else{
+      const k=((now/500)%1);g.strokeStyle=`rgba(255,154,61,${1-k})`;g.lineWidth=3;g.beginPath();g.arc(tx,ty,10+k*34,0,6.2832);g.stroke();
+      g.fillStyle='#ff9a3d';g.font='bold 20px Trebuchet MS, Arial';g.textAlign='center';g.fillText('STILL HITS',230,190);
+    }
+    g.font='12px Trebuchet MS, Arial';
+  }
+}
+function drawBomb(dt,now){
+  const c=document.getElementById('cv-bomb');if(!c)return;
+  const g=c.getContext('2d'),ex=392,ey=115,er=34,sx=38,sy=115,bx=170;
+  g.clearRect(0,0,460,230);g.fillStyle='#040810';g.fillRect(0,0,460,230);
+  for(let i=0;i<40;i++){g.fillStyle='rgba(200,220,255,.3)';g.fillRect((i*79)%460,(i*43)%230,1.2,1.2);}
+  const eg=g.createRadialGradient(ex-10,ey-10,4,ex,ey,er);eg.addColorStop(0,'#8fd0ff');eg.addColorStop(.7,'#1f64c8');eg.addColorStop(1,'#0b2a66');
+  g.fillStyle=eg;g.beginPath();g.arc(ex,ey,er,0,6.2832);g.fill();
+  g.fillStyle='#9fe3a8';g.beginPath();g.arc(ex-8,ey-4,9,0,6.2832);g.fill();g.beginPath();g.arc(ex+10,ey+12,6,0,6.2832);g.fill();
+  g.font='12px Trebuchet MS, Arial';g.fillStyle='#d9e4f7';g.textAlign='center';g.fillText('Earth',ex,ey+er+16);
+  g.strokeStyle='rgba(255,107,107,.6)';g.setLineDash([6,5]);g.lineWidth=1.5;g.beginPath();g.moveTo(sx,sy);g.lineTo(ex,ey);g.stroke();g.setLineDash([]);
+  const R=B.res;
+  if(!R){g.fillStyle='#d9b36c';g.beginPath();g.arc(sx,sy,R0(),0,6.2832);g.fill();return;}
+  function R0(){return 6;}
+  B.anim=Math.min(1,B.anim+dt/3.4);const t=B.anim;
+  const rubble=R.rock==='rubble';
+  const rockCol=rubble?'#a89070':'#d9b36c';
+  if(t<.35){
+    const ax=sx+(bx-sx)*(t/.35);
+    g.fillStyle=rockCol;g.beginPath();g.arc(ax,sy,6,0,6.2832);g.fill();
+    g.fillStyle='#e6d2ff';g.save();g.translate(bx+22,sy-20);g.rotate(Math.PI/4);g.fillRect(-4,-4,8,8);g.restore();
+    g.fillStyle='#d8b8ff';g.textAlign='left';g.fillText('blast',bx+30,sy-26);
+  }else{
+    const u=(t-.35)/.65;
+    // flash
+    if(u<.35){const f=u/.35;g.fillStyle=`rgba(255,200,100,${1-f})`;g.beginPath();g.arc(bx,sy,8+f*50,0,6.2832);g.fill();g.strokeStyle=`rgba(255,255,255,${1-f})`;g.lineWidth=2;g.beginPath();g.arc(bx,sy,10+f*70,0,6.2832);g.stroke();}
+    const m=clamp(u,0,1);
+    if(R.frag){
+      R.offs.forEach((off,i)=>{
+        const x=bx+(ex-bx)*m,y=sy+off*m*(R.warn>=20?1:R.warn>=5?.7:.45);
+        g.fillStyle=rockCol;g.beginPath();g.arc(x,y,3+(i%3)*.7,0,6.2832);g.fill();
+      });
+    }else{
+      const x=bx+(ex-bx)*m,y=sy-R.offs[0]*m;
+      g.strokeStyle=R.o==='saved'?'rgba(57,217,138,.9)':'rgba(255,154,61,.9)';g.lineWidth=2;g.beginPath();g.moveTo(bx,sy);g.lineTo(ex,sy-R.offs[0]);g.stroke();
+      g.fillStyle=rockCol;g.beginPath();g.arc(x,y,6,0,6.2832);g.fill();
+    }
+    if(t>=1){
+      g.font='bold 19px Trebuchet MS, Arial';g.textAlign='center';
+      if(R.frag){g.fillStyle=R.o==='part'?'#ffd36a':'#ff9a3d';g.fillText(`${R.k} of 12 pieces hit`,230,208);}
+      else{g.fillStyle=R.o==='saved'?'#39d98a':'#ff9a3d';g.fillText(R.o==='saved'?'MISS ✔':'STILL HITS',230,208);}
+    }
+  }
+}
+function drawLabs(dt,now){drawJup(dt,now);drawTail(dt,now);drawOrig(dt,now);drawDef(dt,now);drawBomb(dt,now);}
+
+/* ============ SKY SIMULATION ============ */
+const cv=$('#sky'),ctx=cv.getContext('2d');
+let W=800,H=600,DPR=1,SC=40,speedF=1,hoverKey=null,pos={};
+const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const UU=au=>.35+.8*Math.sqrt(au);
+const PL=[
+ {n:'Mercury',au:.39,s:2,c:'#c9b8a8'},{n:'Venus',au:.72,s:3,c:'#f0c987'},{n:'Earth',au:1,s:3.6,c:'#6fb7ff'},{n:'Mars',au:1.52,s:2.6,c:'#ff8f6a'},
+ {n:'Jupiter',au:5.2,s:6.5,c:'#e0b88a'},{n:'Saturn',au:9.5,s:5.5,c:'#e6d29a'},{n:'Uranus',au:19.2,s:4,c:'#9fe3e8'},{n:'Neptune',au:30.07,s:4,c:'#5a7bff'}
+];
+PL.forEach(p=>{p.a=Math.random()*6.2832;p.sp=.28*Math.pow(p.au,-.9);p.u=UU(p.au);});
+const BELT={u0:UU(2.2),u1:UU(3.2),sp:.12},KB={u0:UU(30),u1:UU(50),sp:.02},OORT=6.9;
+const rocksB=Array.from({length:230},()=>({a:Math.random()*6.2832,d:(Math.random()-.5)*(BELT.u1-BELT.u0),s:.7+Math.random()*1.5,sp:.85+Math.random()*.3}));
+const rocksK=Array.from({length:380},()=>({a:Math.random()*6.2832,d:(Math.random()-.5)*(KB.u1-KB.u0),s:.7+Math.random()*1.6,sp:.85+Math.random()*.3}));
+const oortDots=Array.from({length:200},()=>({a:Math.random()*6.2832,d:(Math.random()-.5)*.3,s:.6+Math.random()*1.2}));
+const stars=Array.from({length:170},()=>({x:Math.random(),y:Math.random(),s:Math.random()*1.4+.3,p:Math.random()*6.2832}));
+const C={M:Math.random()*6.2832,w:-.6};
+const N={M:Math.random()*6.2832,a:1.45,e:.345,w:.9};
+const PROBE={s:0};
+let plutoA=Math.random()*6.2832;
+
+function resize(){
+  const wrap=$('#skyWrap');
+  W=wrap.clientWidth;
+  const avail=Math.max(380,window.innerHeight-62-70);
+  H=window.innerWidth<=900?Math.min(W*.95,560):avail;
+  DPR=Math.min(window.devicePixelRatio||1,2);
+  cv.width=W*DPR;cv.height=H*DPR;cv.style.height=H+'px';
+  SC=Math.min(W,H)/2/7.35;
+}
+window.addEventListener('resize',resize);
+if(window.ResizeObserver)new ResizeObserver(resize).observe($('#skyWrap'));
+
+function sphere(x,y,r,c1,c2){
+  const g=ctx.createRadialGradient(x-r*.35,y-r*.35,r*.1,x,y,r);
+  g.addColorStop(0,c1);g.addColorStop(1,c2);
+  ctx.beginPath();ctx.arc(x,y,r,0,6.2832);ctx.fillStyle=g;ctx.fill();
+}
+function ring(cx,cy,u0,u1,col,key){
+  const hot=hoverKey===key||cur===key;
+  ctx.beginPath();ctx.arc(cx,cy,(u0+u1)/2*SC,0,6.2832);
+  ctx.strokeStyle=hot?col.replace('A','.34'):col.replace('A','.1');ctx.lineWidth=(u1-u0)*SC;ctx.stroke();
+}
+function orbitPos(M,a,e,w,cx,cy){
+  const E=kepler(M,e),b=a*Math.sqrt(1-e*e);
+  const x=a*(Math.cos(E)-e),y=b*Math.sin(E);
+  const X=x*Math.cos(w)-y*Math.sin(w),Y=x*Math.sin(w)+y*Math.cos(w);
+  return {x:cx+X*SC,y:cy-Y*SC,r:a*(1-e*Math.cos(E))};
+}
+function label(txt,x,y,key,col){
+  const hot=hoverKey===key||cur===key;
+  ctx.font=(hot?'bold ':'')+'13px Trebuchet MS, Arial, sans-serif';ctx.textAlign='center';
+  ctx.fillStyle=hot?'#fff':col;
+  ctx.fillText((S.done[key]?'✔ ':'')+txt,x,y);
+}
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  const target=reduce?.1:(hoverKey?.15:(cur?.5:1));
+  speedF+=(target-speedF)*Math.min(1,dt*5);
+  const cx=W/2,cy=H/2;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.clearRect(0,0,W,H);
+  stars.forEach(s=>{const tw=.5+.5*Math.sin(now/900+s.p);ctx.globalAlpha=.25+.55*tw;ctx.fillStyle='#cfe0ff';ctx.fillRect(s.x*W,s.y*H,s.s,s.s);});
+  ctx.globalAlpha=1;
+  // planet orbits
+  ctx.lineWidth=1;
+  PL.forEach(p=>{ctx.beginPath();ctx.arc(cx,cy,p.u*SC,0,6.2832);ctx.strokeStyle='rgba(74,158,255,.17)';ctx.stroke();});
+  // belts
+  ring(cx,cy,BELT.u0,BELT.u1,'rgba(217,179,108,A)','belt');
+  ring(cx,cy,KB.u0,KB.u1,'rgba(74,158,255,A)','kuiper');
+  // oort shell
+  const oortHot=hoverKey==='comets'||cur==='comets';
+  ctx.setLineDash([3,6]);ctx.beginPath();ctx.arc(cx,cy,OORT*SC,0,6.2832);ctx.strokeStyle=oortHot?'rgba(111,214,255,.9)':'rgba(111,214,255,.38)';ctx.lineWidth=oortHot?3:1.5;ctx.stroke();ctx.setLineDash([]);
+  oortDots.forEach(o=>{const rr=(OORT+o.d)*SC;ctx.fillStyle=oortHot?'rgba(160,230,255,.9)':'rgba(160,220,255,.4)';ctx.fillRect(cx+Math.cos(o.a)*rr,cy+Math.sin(o.a)*rr,o.s,o.s);});
+  // sun
+  const pulse=1+.04*Math.sin(now/700);
+  const sg=ctx.createRadialGradient(cx,cy,2,cx,cy,50*SC/40*pulse);
+  sg.addColorStop(0,'rgba(255,235,130,1)');sg.addColorStop(.25,'rgba(255,170,40,.65)');sg.addColorStop(1,'rgba(255,120,0,0)');
+  ctx.fillStyle=sg;ctx.beginPath();ctx.arc(cx,cy,50*SC/40*pulse,0,6.2832);ctx.fill();
+  sphere(cx,cy,Math.max(9,.3*SC),'#fff6c0','#ff9a1a');
+  // belt rocks
+  rocksB.forEach(o=>{
+    o.a+=BELT.sp*o.sp*dt*speedF;
+    const rr=((BELT.u0+BELT.u1)/2+o.d)*SC;
+    ctx.fillStyle=hoverKey==='belt'||cur==='belt'?'#f0d9a6':'#a58c66';
+    ctx.fillRect(cx+Math.cos(o.a)*rr,cy+Math.sin(o.a)*rr,o.s*Math.max(.8,SC/40),o.s*Math.max(.8,SC/40));
+  });
+  rocksK.forEach(o=>{
+    o.a+=KB.sp*o.sp*dt*speedF;
+    const rr=((KB.u0+KB.u1)/2+o.d)*SC;
+    ctx.fillStyle=hoverKey==='kuiper'||cur==='kuiper'?'#cfe6ff':'#7f9cc4';
+    ctx.fillRect(cx+Math.cos(o.a)*rr,cy+Math.sin(o.a)*rr,o.s*Math.max(.8,SC/40),o.s*Math.max(.8,SC/40));
+  });
+  // planets
+  PL.forEach(p=>{
+    p.a+=p.sp*dt*speedF*.55;
+    const x=cx+Math.cos(p.a)*p.u*SC,y=cy+Math.sin(p.a)*p.u*SC,r=p.s*Math.max(.85,SC/40);
+    sphere(x,y,r,'#ffffff',p.c);
+    if(p.n==='Earth'||p.n==='Jupiter'||p.n==='Neptune'){ctx.font='11px Trebuchet MS, Arial, sans-serif';ctx.textAlign='center';ctx.fillStyle='#8aa0c4';ctx.fillText(p.n,x,y+r+12);}
+  });
+  // pluto
+  plutoA+=.012*dt*speedF;
+  const pr=UU(39.5)*SC,px0=cx+Math.cos(plutoA)*pr,py0=cy+Math.sin(plutoA)*pr;
+  sphere(px0,py0,3,'#fff','#caa98a');ctx.font='11px Trebuchet MS, Arial, sans-serif';ctx.fillStyle='#cfe6ff';ctx.textAlign='center';ctx.fillText('Pluto',px0,py0-8);
+  // NEO
+  pos={};
+  N.M+=.7*dt*speedF;
+  {
+    ctx.setLineDash([4,5]);ctx.strokeStyle='rgba(255,126,90,.35)';ctx.lineWidth=1;ctx.beginPath();
+    for(let i=0;i<=90;i++){const E=i/90*6.2832,b=N.a*Math.sqrt(1-N.e*N.e);const x=N.a*(Math.cos(E)-N.e),y=b*Math.sin(E);const X=x*Math.cos(N.w)-y*Math.sin(N.w),Y=x*Math.sin(N.w)+y*Math.cos(N.w);const sx=cx+X*SC,sy=cy-Y*SC;i?ctx.lineTo(sx,sy):ctx.moveTo(sx,sy);}
+    ctx.stroke();ctx.setLineDash([]);
+    const q=orbitPos(N.M,N.a,N.e,N.w,cx,cy);pos.neo=q;
+    const hot=hoverKey==='defense'||cur==='defense';
+    if(hot||S.done.defense){ctx.beginPath();ctx.arc(q.x,q.y,10,0,6.2832);ctx.strokeStyle=S.done.defense&&!hot?'#39d98a':'#ff7e5a';ctx.lineWidth=2;ctx.stroke();}
+    sphere(q.x,q.y,4,'#ffd0b8','#a04a2a');
+    label('NEO',q.x+22,q.y-8,'defense','#ff9a7a');
+  }
+  // comet
+  C.M+=.42*dt*speedF;
+  {
+    const q=orbitPos(C.M,CA,CE,C.w,cx,cy),q2=orbitPos(C.M+.02,CA,CE,C.w,cx,cy);
+    pos.comet=q;
+    let dx=q.x-cx,dy=q.y-cy;const dl=Math.hypot(dx,dy)||1;dx/=dl;dy/=dl;
+    let vx=q2.x-q.x,vy=q2.y-q.y;const vl=Math.hypot(vx,vy)||1;vx/=vl;vy/=vl;
+    ctx.setLineDash([2,6]);ctx.strokeStyle='rgba(111,214,255,.2)';ctx.lineWidth=1;ctx.beginPath();
+    for(let i=0;i<=120;i++){const E=i/120*6.2832,b=CB;const x=CA*(Math.cos(E)-CE),y=b*Math.sin(E);const X=x*Math.cos(C.w)-y*Math.sin(C.w),Y=x*Math.sin(C.w)+y*Math.cos(C.w);const sx=cx+X*SC,sy=cy-Y*SC;i?ctx.lineTo(sx,sy):ctx.moveTo(sx,sy);}
+    ctx.stroke();ctx.setLineDash([]);
+    const hot=hoverKey==='comets'||cur==='comets';
+    if(hot||S.done.comets){ctx.beginPath();ctx.arc(q.x,q.y,13,0,6.2832);ctx.strokeStyle=S.done.comets&&!hot?'#39d98a':'#6fd6ff';ctx.lineWidth=2;ctx.stroke();}
+    drawCometTail(ctx,q.x,q.y,dx,dy,vx,vy,cometAct(q.r),SC/52*.8);
+    label('Comet',q.x+(dx>=0?24:-24),q.y+22,'comets','#9fe3ff');
+  }
+  // probe
+  PROBE.s=(now/1000/30)%1;
+  {
+    const f=s=>({u:1.2+s*4.7,a:2.0+s*2.7});
+    const pts=[];for(let i=12;i>=0;i--){const s=Math.max(0,PROBE.s-i*.006);const q=f(s);pts.push([cx+Math.cos(q.a)*q.u*SC,cy+Math.sin(q.a)*q.u*SC]);}
+    ctx.strokeStyle='rgba(197,139,255,.45)';ctx.lineWidth=1.5;ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke();
+    const q=pts[pts.length-1];pos.probe={x:q[0],y:q[1]};
+    const hot=hoverKey==='missions'||cur==='missions';
+    if(hot||S.done.missions){ctx.beginPath();ctx.arc(q[0],q[1],10,0,6.2832);ctx.strokeStyle=S.done.missions&&!hot?'#39d98a':'#c58bff';ctx.lineWidth=2;ctx.stroke();}
+    ctx.save();ctx.translate(q[0],q[1]);ctx.rotate(Math.PI/4);ctx.fillStyle='#e6d2ff';ctx.fillRect(-3.5,-3.5,7,7);ctx.restore();
+    label('Spacecraft',q[0]+34,q[1]+4,'missions','#d8b8ff');
+  }
+  // region labels
+  label('Asteroid Belt',cx+Math.cos(-.8)*(BELT.u1+.25)*SC+34,cy+Math.sin(-.8)*(BELT.u1+.25)*SC-2,'belt','#d9b36c');
+  label('Kuiper Belt',cx+Math.cos(-2.4)*(KB.u1+.12)*SC,cy+Math.sin(-2.4)*(KB.u1+.12)*SC-4,'kuiper','#8cc0ff');
+  label('Oort Cloud',cx+Math.cos(.78)*(OORT+.12)*SC+10,cy+Math.sin(.78)*(OORT+.12)*SC+14,'comets','#8fdcf5');
+  // done rings on belts
+  requestAnimationFrame(frame);
+  drawLabs(dt,now);
+}
+function hit(ev){
+  const rc=cv.getBoundingClientRect(),x=ev.clientX-rc.left,y=ev.clientY-rc.top;
+  const dd=p=>Math.hypot(x-p.x,y-p.y);
+  if(pos.comet&&dd(pos.comet)<20)return 'comets';
+  if(pos.neo&&dd(pos.neo)<18)return 'defense';
+  if(pos.probe&&dd(pos.probe)<18)return 'missions';
+  const d=Math.hypot(x-W/2,y-H/2)/SC;
+  if(d>BELT.u0-.12&&d<BELT.u1+.12)return 'belt';
+  if(d>KB.u0+.08&&d<KB.u1+.12)return 'kuiper';
+  if(d>OORT-.28&&d<OORT+.32)return 'comets';
+  return null;
+}
+cv.addEventListener('pointermove',e=>{hoverKey=hit(e);cv.style.cursor=hoverKey?'pointer':'default';});
+cv.addEventListener('pointerleave',()=>{hoverKey=null;});
+cv.addEventListener('click',e=>{const k=hit(e);if(k)openStop(k);});
+
+/* ============ CHROME ============ */
+function renderChrome(){
+  $('#who').textContent=S.name?`Explorer: ${S.name}`:'';
+  const n=doneCount();
+  $('#progTxt').textContent=`${n} of 5 stops`;
+  $('#dots').innerHTML=ORDER.map(k=>`<span class="pdot ${S.done[k]?'on':''}" title="${esc(P[k].name)}"></span>`).join(' ');
+  let h=ORDER.map(k=>`<button class="chip" style="border-left-color:${P[k].color}" data-act="chip" data-k="${k}"><span class="ck">${S.done[k]?'✔':''}</span>${P[k].sym} ${esc(P[k].name)}</button>`).join('');
+  h+='<div class="chipgap">';
+  if(n===5)h+=`<button class="btn" data-act="seeGuide">📘 Note Guide</button>`;
+  if(S.finished)h+=`<button class="btn" data-act="seeReport">📄 My report</button>`;
+  h+=`<button class="btn go" data-act="final" ${n===5?'':'disabled'}>${n===5?'Final Challenge ▶':'🔒 Final Challenge (visit all 5)'}</button></div>`;
+  $('#chips').innerHTML=h;
+  const hint=$('#hint');
+  if(n===5)hint.innerHTML=S.finished?'<b>You finished!</b> Your Note Guide and Report are ready below.':'<b>All 5 stops done!</b> Start the Final Challenge below.';
+  else hint.innerHTML=`<b>Click a glowing area</b> or a moving object to ${n?'keep going':'start'}. Visit all 5 stops. Each stop has 4 steps.`;
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]');if(!t)return;
+  const a=t.dataset.act;
+  if(a==='chip')openStop(t.dataset.k);
+  else if(a==='final'){renderFinal();$('#final').classList.add('show');$('#final').scrollTop=0;}
+  else if(a==='seeReport')showReport();
+  else if(a==='seeGuide')showGuide();
+  else if(a==='opt'){S.opt=+t.dataset.v;save();renderFinal();}
+  else if(a==='pair'){S.pair=t.dataset.v;save();renderFinal();}
+  else if(a==='neo'){S.neo=t.dataset.v;save();renderFinal();}
+  else if(a==='tech'){S.tech=t.dataset.v;save();renderFinal();}
+  else if(a==='chipf'){
+    const bank=bankFor(partById(t.dataset.p));const f=bank[+t.dataset.i];
+    const arr=S.chips[t.dataset.p]||(S.chips[t.dataset.p]=[]);const ix=arr.indexOf(f);
+    if(ix>=0)arr.splice(ix,1);else arr.push(f);
+    save();renderFinal();
+  }
+  else if(a==='poll'){S.poll=+t.dataset.i;save();renderFinal();}
+});
+
+/* ============ FINAL CHALLENGE ============ */
+const ALLPARTS=OPT1.concat(OPT2);
+const partById=id=>ALLPARTS.find(p=>p.id===id);
+function bankFor(pt){
+  if(!pt.bank)return null;
+  if(S.opt===1){
+    if(pt.bank==='sum')return SUMBANK;
+    return S.pair?PAIRS[S.pair].facts[pt.bank]:[];
+  }
+  if(pt.bank==='tech')return S.tech?TECH[S.tech].pro.concat(TECH[S.tech].con):[];
+  if(pt.bank==='time')return TIMEBANK;
+  if(pt.bank==='sys')return SYSBANK;
+  return (S.neo&&S.neo!=='other'&&NEOS[S.neo])?NEOS[S.neo].facts[pt.bank]:[];
+}
+const curParts=()=>S.opt===1?OPT1:(S.opt===2?OPT2:[]);
+function finalMissing(){
+  const m=[];
+  if(doneCount()<5)m.push('Finish all 5 stops.');
+  if(!S.opt){m.push('Pick Option 1 or Option 2.');return m;}
+  if(S.opt===1&&!S.pair){m.push('Pick the two objects to compare.');return m;}
+  if(S.opt===2){
+    if(!S.neo){m.push('Pick your NEO.');return m;}
+    if(S.neo==='other'&&!S.neoOther.trim())m.push('Type the name of your NEO.');
+    if(!S.tech)m.push('Pick a deflection technique (in part 4).');
+  }
+  curParts().forEach(pt=>{
+    const bank=bankFor(pt);
+    if(bank&&bank.length&&!(S.chips[pt.id]||[]).length)m.push(`${pt.title}: tap at least 1 fact.`);
+    const len=(S.w[pt.id]||'').trim().length;
+    if(len<MINCHARS)m.push(`${pt.title}: write at least ${MINCHARS} characters (you have ${len}).`);
+  });
+  return m;
+}
+function cntHTML(len){
+  if(len<MINCHARS)return `${fmtN(len)} characters. Write at least ${MINCHARS}.`;
+  return `${fmtN(len)} characters ✔ There is no limit. Strong answers are often 500 to 1,000 or more.`;
+}
+function partHTML(pt){
+  const bank=bankFor(pt),sel=S.chips[pt.id]||[],txt=S.w[pt.id]||'';
+  let h=`<div class="part"><h3>${esc(pt.title)}</h3><p class="ask">${esc(pt.ask)}</p>`;
+  if(pt.id==='o2.tech'){
+    h+=`<p class="note"><b>Pick one technique first.</b></p><div class="neocards">`+Object.keys(TECH).map(k=>`<button class="optbtn ${S.tech===k?'sel':''}" data-act="tech" data-v="${k}"><b>${esc(TECH[k].name)}</b></button>`).join('')+'</div>';
+  }
+  let step=1;
+  if(bank&&bank.length){
+    h+=`<p class="note"><b>Step ${step++}.</b> Tap the facts you plan to use.</p><div class="bank">${bank.map((f,i)=>`<button class="fchip ${sel.includes(f)?'on':''}" data-act="chipf" data-p="${pt.id}" data-i="${i}">${esc(f)}</button>`).join('')}</div>`;
+  }else if(pt.bank&&S.opt===2&&S.neo==='other'&&['size','comp','orbit','risk'].includes(pt.bank)){
+    h+=`<p class="note">You picked your own NEO. Research it with the links above. Then write what you find.</p>`;
+  }
+  h+=`<p class="note"><b>Step ${step}.</b> Write in your own words. There is no limit.</p><p class="start">Sentence starters: ${pt.starters.map(esc).join(' · ')}</p>`;
+  h+=`<textarea class="resp" id="ta-${pt.id}" data-pid="${pt.id}" aria-label="${esc(pt.title)}">${esc(txt)}</textarea><div class="cnt ${txt.trim().length>=MINCHARS?'ok':''}" id="cnt-${pt.id}">${cntHTML(txt.trim().length)}</div></div>`;
+  return h;
+}
+function renderFinal(){
+  const sc=$('#final').scrollTop;
+  let h=`<h1>🏁 Final Challenge</h1><p>You visited all 5 stops. Now explore one option in detail. Your Note Guide is ready too.</p><div class="actions"><button class="btn ghost" id="fBack">◀ Back to the sky</button><button class="btn" data-act="seeGuide">📘 Open my Note Guide</button></div>`;
+  h+=`<h2>Part A: Pick your option</h2><div class="optbtns">
+   <button class="optbtn ${S.opt===1?'sel':''}" data-act="opt" data-v="1"><b>Option 1: Comparative Analysis</b>Compare two kinds of small objects.</button>
+   <button class="optbtn ${S.opt===2?'sel':''}" data-act="opt" data-v="2"><b>Option 2: Planetary Defense</b>Plan how to protect Earth from a NEO.</button></div>`;
+  if(S.opt===1){
+    h+=`<h2>Part B: Compare two objects</h2><ol class="dirs" style="font-family:var(--ui);font-size:14.5px"><li>Pick a pair to compare.</li><li>For each part, tap the facts you will use.</li><li>Write your answer in the box. Use your own words.</li></ol><div class="neocards">`+
+      Object.keys(PAIRS).map(k=>`<button class="optbtn ${S.pair===k?'sel':''}" data-act="pair" data-v="${k}"><b>${esc(PAIRS[k].label)}</b></button>`).join('')+'</div>';
+    if(S.pair)h+=OPT1.map(partHTML).join('');
+  }else if(S.opt===2){
+    h+=`<h2>Part B: Plan a defense</h2><ol class="dirs" style="font-family:var(--ui);font-size:14.5px"><li>Pick a NEO. Or pick “My own” and research one.</li><li>For each part, tap the facts you will use.</li><li>Write your answer in the box. Use your own words.</li></ol><div class="neocards">`+
+      Object.keys(NEOS).map(k=>`<button class="optbtn ${S.neo===k?'sel':''}" data-act="neo" data-v="${k}"><b>${esc(NEOS[k].name)}</b><span>${esc(NEOS[k].blurb)}</span></button>`).join('')+
+      `<button class="optbtn ${S.neo==='other'?'sel':''}" data-act="neo" data-v="other"><b>My own NEO</b><span>Research a different near-Earth object.</span></button></div>`;
+    if(S.neo==='other')h+=`<label for="neoOther">Name of your NEO</label><input type="text" id="neoOther" value="${esc(S.neoOther)}" placeholder="Example: 433 Eros"><p class="note">Research links: <a style="color:#6fd6ff" href="https://cneos.jpl.nasa.gov/" target="_blank" rel="noopener">NASA CNEOS</a> · <a style="color:#6fd6ff" href="https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html" target="_blank" rel="noopener">Small-Body Database</a> · <a style="color:#6fd6ff" href="https://eyes.nasa.gov/apps/asteroids/" target="_blank" rel="noopener">Eyes on Asteroids</a></p>`;
+    if(S.neo)h+=OPT2.map(partHTML).join('');
+  }
+  h+=`<h2>Part C: One more question</h2><div class="q"><p class="qt">${esc(POLL.prompt)} <span class="optbadge">(not graded)</span></p><div class="opts">`+
+    POLL.opts.map((o,i)=>`<button class="opt ${S.poll===i?'sel':''}" data-act="poll" data-i="${i}">${esc(o)}</button>`).join('')+'</div></div>';
+  h+=`<h2>Part D: Get your files</h2>
+   <div id="todoBox"></div>
+   <div class="actions"><button class="btn go" id="mkReport" disabled>📄 Make my Report (turn this in)</button><button class="btn" data-act="seeGuide">📘 Open my Note Guide (keep this)</button></div>
+   <p class="note">Your writing saves on this computer as you type.</p>`;
+  $('#finalSheet').innerHTML=h;
+  $('#final').scrollTop=sc;
+  $('#fBack').onclick=()=>{$('#final').classList.remove('show');renderChrome();};
+  $('#mkReport').onclick=()=>{
+    if(!S.finished){S.finished=new Date().toISOString();S.code='SSO-'+hash(S.name+'|'+scoreInfo().firstTry+'|'+S.finished).toString(36).toUpperCase().slice(0,6);save();}
+    $('#final').classList.remove('show');renderChrome();showReport();
+  };
+  const no=$('#neoOther');if(no)no.addEventListener('input',()=>{S.neoOther=no.value;save();updateFinalGate();});
+  ALLPARTS.forEach(pt=>{const ta=document.getElementById('ta-'+pt.id);if(ta)autoGrow(ta);});
+  updateFinalGate();
+}
+function autoGrow(ta){ta.style.height='auto';ta.style.height=Math.max(170,ta.scrollHeight+4)+'px';}
+function updateFinalGate(){
+  const miss=finalMissing();
+  const el=$('#todoBox');
+  if(el)el.innerHTML=miss.length?`<div class="todo">Still to do:<ul>${miss.map(m=>`<li>${esc(m)}</li>`).join('')}</ul></div>`:`<p style="color:#39d98a;font-family:var(--ui)">✔ Everything is done. Make your report.</p>`;
+  const b=$('#mkReport');if(b)b.disabled=miss.length>0;
+}
+let saveTimer=null;
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.matches&&t.matches('textarea.resp')){
+    S.w[t.dataset.pid]=t.value;autoGrow(t);
+    const c=document.getElementById('cnt-'+t.dataset.pid);
+    if(c){const len=t.value.trim().length;c.textContent=cntHTML(len);c.classList.toggle('ok',len>=MINCHARS);}
+    clearTimeout(saveTimer);saveTimer=setTimeout(save,300);
+    updateFinalGate();
+  }
+});
+
+/* ============ SCORING ============ */
+function optText(it,idx){return(idx===null||idx===undefined)?'—':it.opts[idx];}
+function promptText(it){return it.kind==='note'?strip(it.pre)+'_____'+strip(it.post):strip(it.prompt);}
+function itemRow(it){
+  const st=S.ans[it.id]||{};
+  return {it,prompt:promptText(it),first:optText(it,st.first),final:optText(it,st.val),tries:st.tries||0,firstOk:st.first===it.correct,ok:!!st.ok};
+}
+function scoreInfo(){
+  let total=0,firstTry=0,bonusN=0,bonusOk=0;const bodies=[];
+  ORDER.forEach(k=>{
+    const rows=[],bonus=[];
+    ['x','c','n'].forEach(s=>P[k][s].forEach(it=>{const r=itemRow(it);if(it.bonus)bonus.push(r);else rows.push(r);}));
+    const ft=rows.filter(r=>r.firstOk).length;
+    bodies.push({key:k,rows,bonus,ft,n:rows.length});
+    total+=rows.length;firstTry+=ft;
+    bonus.forEach(r=>{if(r.tries){bonusN++;if(r.firstOk)bonusOk++;}});
+  });
+  return {total,firstTry,bodies,bonusN,bonusOk};
+}
+
+/* ============ REPORT ============ */
+function optionData(){
+  const dash=v=>v||'—';
+  if(S.opt===1){
+    const pr=PAIRS[S.pair];
+    return {title:'Option 1: Comparative Analysis',lines:[['Objects compared',pr?pr.label:'—']],parts:OPT1.map(pt=>({title:pt.title,facts:S.chips[pt.id]||[],text:S.w[pt.id]||''}))};
+  }
+  if(S.opt===2){
+    const nn=S.neo==='other'?dash(S.neoOther.trim()):(NEOS[S.neo]?NEOS[S.neo].name:'—');
+    return {title:'Option 2: Planetary Defense Analysis',lines:[['NEO selected',nn],['Deflection technique picked',S.tech?TECH[S.tech].name:'—']],parts:OPT2.map(pt=>({title:pt.title,facts:S.chips[pt.id]||[],text:S.w[pt.id]||''}))};
+  }
+  return null;
+}
+function reportHTML(){
+  const si=scoreInfo(),d=new Date(S.finished||Date.now()),od=optionData();
+  const pct=Math.round(100*si.firstTry/si.total);
+  let h=`<h1>Small Solar System Objects: Completion Report</h1>
+  <p class="meta"><b>Name:</b> ${esc(S.name)}${S.period?` &nbsp;|&nbsp; <b>Period:</b> ${esc(S.period)}`:''}</p>
+  <p class="meta"><b>Completed:</b> ${esc(d.toLocaleString())}</p>
+  <p class="meta"><b>Completion code:</b> <span class="code">${esc(S.code||'')}</span></p>
+  <p class="big">First-try score: ${si.firstTry} of ${si.total} (${pct}%)</p>
+  <p class="meta">Every question below was answered correctly in the end. “First try” shows which ones were right on the first pick.${si.bonusN?` Bonus questions: ${si.bonusOk} of ${si.bonusN} right on the first try.`:''}</p>
+  <h2>Stops completed</h2><table><tr><th>Stop</th><th>Finished?</th><th>Right on first try</th></tr>`;
+  si.bodies.forEach(b=>{h+=`<tr><td>${esc(P[b.key].name)}</td><td>${S.done[b.key]?'Yes ✔':'No'}</td><td>${b.ft} of ${b.n}</td></tr>`;});
+  h+='</table>';
+  if(od){
+    let total=0;od.parts.forEach(p=>total+=p.text.trim().length);
+    h+=`<h2>${esc(od.title)}</h2>`;
+    od.lines.forEach(l=>{h+=`<p class="meta"><b>${esc(l[0])}:</b> ${esc(l[1])}</p>`;});
+    h+=`<p class="meta"><b>Total written:</b> ${fmtN(total)} characters</p>`;
+    od.parts.forEach(p=>{
+      h+=`<div class="pb"><h3>${esc(p.title)}</h3>`;
+      if(p.facts.length)h+=`<p class="facts"><b>Facts I picked:</b> ${p.facts.map(esc).join(' · ')}</p>`;
+      h+=`<div class="resp">${esc(p.text.trim())}</div></div>`;
+    });
+    if(S.poll!==null&&S.poll!==undefined)h+=`<p class="meta" style="margin-top:12px"><b>${esc(POLL.prompt)}</b> ${esc(POLL.opts[S.poll])}</p>`;
+  }
+  h+='<h2>Question details</h2>';
+  si.bodies.forEach(b=>{
+    h+=`<h3>${esc(P[b.key].name)}</h3><table><tr><th>Question or note</th><th>Your first answer</th><th>Tries</th></tr>`;
+    b.rows.concat(b.bonus.filter(r=>r.tries)).forEach(r=>{
+      h+=`<tr><td>${r.it.bonus?'<span class="tag">BONUS</span> ':''}${esc(r.prompt)}</td><td>${esc(r.first)}${r.firstOk?'':` <br><span class="retry">Final answer: ${esc(r.final)}</span>`}</td><td class="${r.tries<=1?'good':'retry'}">${r.tries<=1?'✔ 1':r.tries}</td></tr>`;
+    });
+    h+='</table>';
+  });
+  return h;
+}
+function reportText(){
+  const si=scoreInfo(),d=new Date(S.finished||Date.now()),od=optionData();
+  const L=[];
+  L.push('SMALL SOLAR SYSTEM OBJECTS: COMPLETION REPORT');
+  L.push(`Name: ${S.name}${S.period?'   Period: '+S.period:''}`);
+  L.push(`Completed: ${d.toLocaleString()}`);
+  L.push(`Completion code: ${S.code}`);
+  L.push(`First-try score: ${si.firstTry} of ${si.total} (${Math.round(100*si.firstTry/si.total)}%)`);
+  L.push('');L.push('STOPS COMPLETED');
+  si.bodies.forEach(b=>L.push(`- ${P[b.key].name}: ${S.done[b.key]?'finished':'NOT finished'} (${b.ft} of ${b.n} right on first try)`));
+  if(od){
+    L.push('');L.push(od.title.toUpperCase());
+    od.lines.forEach(l=>L.push(`${l[0]}: ${l[1]}`));
+    od.parts.forEach(p=>{
+      L.push('');L.push(p.title);
+      if(p.facts.length)L.push('Facts I picked: '+p.facts.join(' | '));
+      L.push(p.text.trim());
+    });
+    if(S.poll!==null&&S.poll!==undefined){L.push('');L.push(`${POLL.prompt} ${POLL.opts[S.poll]}`);}
+  }
+  L.push('');L.push('QUESTION DETAILS');
+  si.bodies.forEach(b=>{
+    L.push('');L.push(P[b.key].name.toUpperCase());
+    b.rows.forEach((r,i)=>L.push(`${i+1}. ${r.prompt} → ${r.first}${r.firstOk?'':' (final: '+r.final+')'} [tries: ${r.tries}]`));
+  });
+  return L.join('\n');
+}
+
+/* ============ NOTE GUIDE ============ */
+function scaleWorksheetHTML(){
+  const ratio=BASE_CM/PLUTO_KM,earth=EARTH_KM*ratio,sun=SUN_KM*ratio,dist=PLUTO_SUN_KM*ratio,secs=PLUTO_SUN_KM/300000;
+  return `<h3>Scale model: Pluto as a baseball (worked out)</h3>
+  <table><tr><th>Known</th><th>Value</th></tr><tr><td>Real Pluto width</td><td>${fmtN(PLUTO_KM)} km</td></tr><tr><td>Real Earth width</td><td>${fmtN(EARTH_KM)} km</td></tr><tr><td>Real Pluto–Sun distance (average)</td><td>${fmtN(PLUTO_SUN_KM)} km</td></tr><tr><td>Model Pluto (baseball)</td><td>${BASE_CM} cm</td></tr></table>
+  <ul><li><b>Scale ratio</b> = model size ÷ real size = ${BASE_CM} cm ÷ ${fmtN(PLUTO_KM)} km = <b>${ratio.toPrecision(2)} cm per km</b></li>
+  <li><b>Model Earth</b> = ${fmtN(EARTH_KM)} km × ${ratio.toPrecision(2)} = about <b>${fmtLen(earth)}</b> (a big beach ball)</li>
+  <li><b>Model Sun distance</b> = ${fmtN(PLUTO_SUN_KM)} km × ${ratio.toPrecision(2)} = about <b>${fmtLen(dist)}</b> (about a 2-hour drive)</li>
+  <li><b>Model Sun width</b> = about ${fmtLen(sun)} (about half a football field)</li>
+  <li><b>Bonus: light travel time</b> = ${fmtN(PLUTO_SUN_KM)} km ÷ 300,000 km/s = about ${fmtN(secs)} seconds = about <b>5½ hours</b></li></ul>`;
+}
+function guideHTML(){
+  const d=new Date();
+  let h=`<h1>Small Solar System Objects: Note Guide</h1>
+  <p class="meta"><b>Name:</b> ${esc(S.name)}${S.period?` &nbsp;|&nbsp; <b>Period:</b> ${esc(S.period)}`:''}</p>
+  <p class="meta"><b>Date:</b> ${esc(d.toLocaleDateString())}</p>
+  <p class="meta">Keep this guide. It holds the key ideas from all 5 stops. Do not turn it in. Turn in your Report instead.</p>
+  <h2>Big picture</h2>
+  <table><tr><th>Region</th><th>Distance from Sun</th><th>Made of</th><th>Examples</th></tr>
+  <tr><td>Asteroid Belt</td><td>2.2–3.2 AU</td><td>Rock and metal</td><td>Ceres, Vesta, Pallas, Hygiea</td></tr>
+  <tr><td>Kuiper Belt</td><td>30–50 AU</td><td>Ice</td><td>Pluto, Eris, Makemake, Haumea, Arrokoth</td></tr>
+  <tr><td>Oort Cloud</td><td>2,000–100,000 AU (not seen yet)</td><td>Ice</td><td>Source of long-period comets</td></tr>
+  <tr><td>Near-Earth Objects</td><td>Orbits near Earth’s path</td><td>Rock, metal, or ice</td><td>Apophis, Bennu, Didymos</td></tr></table>`;
+  ORDER.forEach(k=>{
+    const p=P[k];
+    h+=`<h2>${p.sym} ${esc(p.name)}</h2>`;
+    h+=`<h3>My notes</h3><ul>${p.n.map(it=>`<li>${esc(it.pre)}<b>${esc(it.opts[it.correct])}</b>${esc(it.post)}</li>`).join('')}</ul>`;
+    h+=`<h3>Key facts</h3><ul>${p.learn.map(c=>`<li><b>${c[0]}${/[?!]$/.test(c[0])?'':':'}</b> ${c[1]}</li>`).join('')}</ul>`;
+    h+=`<h3>Vocabulary</h3><table><tr><th>Word</th><th>Meaning</th></tr>${p.vocab.map(v=>`<tr><td><b>${esc(v[0])}</b></td><td>${esc(v[1])}</td></tr>`).join('')}</table>`;
+    h+=p.ref;
+    if(k==='kuiper')h+=scaleWorksheetHTML();
+  });
+  const kcs=[];ORDER.forEach(k=>P[k].c.forEach(it=>{if(it.kc)kcs.push(it);}));kcs.sort((a,b)=>a.kc-b.kc);
+  h+='<h2>Knowledge Check: questions and answers</h2>';
+  kcs.forEach(it=>{h+=`<div class="kc pb"><span class="tag">Q${it.kc} · ${esc(it.cc)}</span><br><b>${esc(strip(it.prompt))}</b><br>Answer: ${esc(it.opts[it.correct])}<br>Why: ${esc(it.why)}</div>`;});
+  h+='<h2>Crosscutting concepts</h2><table><tr><th>Concept</th><th>What it means here</th></tr>'+CCs.map(c=>`<tr><td><b>${esc(c[0])}</b></td><td>${esc(c[1])}</td></tr>`).join('')+'</table>';
+  return h;
+}
+function guideText(){
+  const L=[];
+  L.push('SMALL SOLAR SYSTEM OBJECTS: NOTE GUIDE');
+  L.push(`Name: ${S.name}${S.period?'   Period: '+S.period:''}`);
+  ORDER.forEach(k=>{
+    const p=P[k];
+    L.push('');L.push(p.name.toUpperCase());
+    L.push('My notes:');
+    p.n.forEach(it=>L.push(`- ${it.pre}${it.opts[it.correct]}${it.post}`));
+    L.push('Key facts:');
+    p.learn.forEach(c=>L.push(`- ${c[0]}${/[?!]$/.test(c[0])?'':':'} ${strip(c[1])}`));
+    L.push('Vocabulary:');
+    p.vocab.forEach(v=>L.push(`- ${v[0]}: ${v[1]}`));
+  });
+  const ratio=BASE_CM/PLUTO_KM;
+  L.push('');L.push('SCALE MODEL: PLUTO AS A BASEBALL');
+  L.push(`Scale ratio = ${BASE_CM} cm ÷ ${fmtN(PLUTO_KM)} km = ${ratio.toPrecision(2)} cm per km`);
+  L.push(`Model Earth = about ${fmtLen(EARTH_KM*ratio)}`);
+  L.push(`Model Sun distance = about ${fmtLen(PLUTO_SUN_KM*ratio)}`);
+  const kcs=[];ORDER.forEach(k=>P[k].c.forEach(it=>{if(it.kc)kcs.push(it);}));kcs.sort((a,b)=>a.kc-b.kc);
+  L.push('');L.push('KNOWLEDGE CHECK');
+  kcs.forEach(it=>L.push(`Q${it.kc} (${it.cc}): ${strip(it.prompt)}\n  Answer: ${it.opts[it.correct]}\n  Why: ${it.why}`));
+  return L.join('\n');
+}
+
+/* ============ VIEWS, COPY, DOWNLOAD, PRINT ============ */
+const REPORT_CSS=[...document.styleSheets[0].cssRules].filter(r=>r.selectorText&&r.selectorText.startsWith('.report')).map(r=>r.cssText).join('\n');
+function cleanName(){return (S.name||'Student').replace(/[^a-z0-9]+/gi,'-');}
+function doPrint(cls){
+  document.body.classList.add(cls);
+  const done=()=>{document.body.classList.remove(cls);window.removeEventListener('afterprint',done);};
+  window.addEventListener('afterprint',done);
+  window.print();
+}
+function copyText(txt,msgEl,okMsg){
+  const done=()=>{msgEl.textContent=okMsg;setTimeout(()=>msgEl.textContent='',4000);};
+  function fallback(){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){msgEl.textContent='Copy failed. Use Download instead.';}ta.remove();}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done,fallback);}else fallback();
+}
+function download(inner,title,fname){
+  const html=`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>${esc(title)}</title><style>body{background:#fff;margin:0}${REPORT_CSS}</style></head><body><div class="report">${inner}</div></body></html>`;
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));
+  a.download=fname;document.body.appendChild(a);a.click();a.remove();
+}
+function showReport(){$('#reportBox').innerHTML=reportHTML();$('#reportView').classList.add('show');$('#reportView').scrollTop=0;}
+function showGuide(){$('#guideBox').innerHTML=guideHTML();$('#guideView').classList.add('show');$('#guideView').scrollTop=0;}
+$('#rBack').onclick=()=>$('#reportView').classList.remove('show');
+$('#gBack').onclick=()=>$('#guideView').classList.remove('show');
+$('#rPrint').onclick=()=>doPrint('pr-report');
+$('#gPrint').onclick=()=>doPrint('pr-guide');
+$('#rCopy').onclick=()=>copyText(reportText(),$('#rMsg'),'Copied! Paste it into Canvas.');
+$('#gCopy').onclick=()=>copyText(guideText(),$('#gMsg'),'Copied!');
+$('#rDown').onclick=()=>download(reportHTML(),'Report - '+S.name,`Small-Objects-Report-${cleanName()}.html`);
+$('#gDown').onclick=()=>download(guideHTML(),'Note Guide - '+S.name,`Small-Objects-Note-Guide-${cleanName()}.html`);
+
+/* ============ INTRO ============ */
+const nm=$('#nm'),pd=$('#pd'),startBtn=$('#startBtn');
+nm.value=S.name||'';pd.value=S.period||'';
+startBtn.disabled=!nm.value.trim();
+nm.addEventListener('input',()=>{startBtn.disabled=!nm.value.trim();});
+startBtn.addEventListener('click',()=>{S.name=nm.value.trim();S.period=pd.value.trim();save();$('#intro').classList.remove('show');renderChrome();});
+if(S.name){startBtn.textContent='Continue exploring';$('#freshBtn').style.display='';}
+$('#freshBtn').addEventListener('click',()=>{
+  if(confirm('This erases the saved work on this computer. Start over?')){try{localStorage.removeItem(KEY);}catch(e){}location.reload();}
+});
+
+/* ============ START ============ */
+resize();renderChrome();requestAnimationFrame(frame);
+</script>
+</body>
+</html>
